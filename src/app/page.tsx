@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import Image from 'next/image';
 import car from './assets/car.jpg';
 import flood from './assets/flood.jpg';
 import strom from './assets/strom.jpg';
@@ -81,7 +82,14 @@ const DisasterManagementLanding = () => {
        {/* Heroes Section */}
        <section className="mt-0 relative">
         <div className="relative">
-          <img src={car.src} alt="Disaster scene" className="w-full h-[500px] object-cover brightness-75" />
+          <div className="w-full h-[750px] relative">
+            <Image 
+              src={car} 
+              alt="Disaster scene" 
+              fill 
+              className="object-cover brightness-75"
+            />
+          </div>
           
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-8">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">Disaster Heroes</h2>
@@ -211,15 +219,29 @@ const DisasterManagementLanding = () => {
         {/* Prevention Tips Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
           <div className="relative overflow-hidden rounded-lg h-48">
-            <img src={flood.src} alt="Rising water" className="w-full h-full object-cover" />
+            <div className="h-full w-full relative">
+              <Image 
+                src={flood.src} 
+                alt="Rising water" 
+                fill 
+                className="object-cover"
+              />
+            </div>
             <div className="absolute inset-0 bg-black bg-opacity-50 p-4 flex flex-col justify-end">
-              <h3 className="text-white text-lg font-semibold">Rising water levels can cause unavoidable damage before you're even aware of it.</h3>
+              <h3 className="text-white text-lg font-semibold">Rising water levels can cause unavoidable damage before you&apos;re even aware of it.</h3>
               <p className="text-white text-sm">Learn how to protect your property.</p>
             </div>
           </div>
           
           <div className="relative overflow-hidden rounded-lg h-48">
-            <img src={accident.src} alt="Weather warnings" className="w-full h-full object-cover" />
+            <div className="h-full w-full relative">
+              <Image 
+                src={accident} 
+                alt="Weather warnings" 
+                fill 
+                className="object-cover"
+              />
+            </div>
             <div className="absolute inset-0 bg-black bg-opacity-50 p-4 flex flex-col justify-end">
               <h3 className="text-white text-lg font-semibold">We monitor over 200+ locations each day to advance you of impending crises.</h3>
               <p className="text-white text-sm">Subscribe to our emergency alerts.</p>
@@ -227,7 +249,14 @@ const DisasterManagementLanding = () => {
           </div>
           
           <div className="relative overflow-hidden rounded-lg h-48">
-            <img src={strom.src} alt="Emergency response" className="w-full h-full object-cover" />
+            <div className="h-full w-full relative">
+              <Image 
+                src={strom} 
+                alt="Emergency response" 
+                fill 
+                className="object-cover"
+              />
+            </div>
             <div className="absolute inset-0 bg-black bg-opacity-50 p-4 flex flex-col justify-end">
               <h3 className="text-white text-lg font-semibold">Disaster and our team of experts will instantly notify your emergency contacts.</h3>
               <p className="text-white text-sm">Add your priority contacts.</p>
