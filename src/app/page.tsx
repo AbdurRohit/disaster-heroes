@@ -5,7 +5,6 @@ import car from './assets/car.jpg';
 import flood from './assets/flood.jpg';
 import strom from './assets/strom.jpg';
 import accident from './assets/accident.jpg';
-import reprot from './report/page';
 import { useRouter } from 'next/navigation';
 
 const DisasterManagementLanding = () => {
