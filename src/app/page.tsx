@@ -9,8 +9,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
 
 const DisasterManagementLanding = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const router = useRouter();
 
