@@ -1,8 +1,11 @@
 import React from 'react';
 import { FaGoogle } from 'react-icons/fa';
+import Navbar from '../components/Navbar';
 
 const LoginPage = () => {
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-100 to-blue-200 p-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
         <div className="px-8 py-10">
@@ -132,6 +135,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

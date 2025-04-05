@@ -4,6 +4,7 @@ import Image from 'next/image';
 import car from './assets/car.jpg';
 import flood from './assets/flood.jpg';
 import strom from './assets/strom.jpg';
+import bg from './assets/back1anime.jpeg';
 import accident from './assets/accident.jpg';
 import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
@@ -28,7 +29,7 @@ const DisasterManagementLanding = () => {
         <div className="relative">
           <div className="w-full h-[750px] relative">
             <Image
-              src={car}
+              src={bg}
               alt="Disaster scene"
               fill
               className="object-cover brightness-75"
