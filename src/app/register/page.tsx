@@ -1,6 +1,6 @@
 // components/RegistrationPage.jsx
 "use client"
-import { use, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';

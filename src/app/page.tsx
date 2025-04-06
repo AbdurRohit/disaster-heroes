@@ -1,7 +1,7 @@
 "use client";
 // import React, { useState } from 'react';
 import Image from 'next/image';
-import car from './assets/car.jpg';
+// import car from './assets/car.jpg';
 import flood from './assets/flood.jpg';
 import strom from './assets/strom.jpg';
 import bg from './assets/back1anime.jpeg';
