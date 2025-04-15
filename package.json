@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@reach/combobox": "^0.18.0",
+    "@headlessui/react": "^2.2.1",
     "@react-google-maps/api": "^2.20.6",
     "@shadcn/ui": "^0.0.4",
     "@vis.gl/react-google-maps": "^1.5.2",

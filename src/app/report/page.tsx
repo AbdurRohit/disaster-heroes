@@ -10,16 +10,9 @@ import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
 } from "use-places-autocomplete";
-import {
-  Combobox,
-  ComboboxInput,
-  ComboboxPopover,
-  ComboboxList,
-  ComboboxOption,
-} from "@reach/combobox";
-import "@reach/combobox/styles.css";
+import { Combobox } from '@headlessui/react';
 import Navbar from '../components/Navbar';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 // Form data interface
 interface FormData {
@@ -74,6 +67,12 @@ const PlacesAutocomplete = ({ setSelected, onAddressSelect }: {
     suggestions: { status, data },
     clearSuggestions,
   } = usePlacesAutocomplete();
+  
+  const [query, setQuery] = useState(value);
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
 
   const handleSelect = async (address: string) => {
     setValue(address, false);
@@ -93,29 +92,43 @@ const PlacesAutocomplete = ({ setSelected, onAddressSelect }: {
   };
 
   return (
-    <Combobox onSelect={handleSelect}>
-      <div className="relative w-full">
-        <ComboboxInput
-          value={value}
-          onChange={(e: { target: { value: any; }; }) => setValue(e.target.value)}
-          disabled={!ready}
-          className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-white"
-          placeholder="Search location..."
-        />
-        <ComboboxPopover>
-          <ComboboxList className="text-gray-900 bg-white shadow-md rounded-md max-h-60 overflow-auto">
+    <div className="relative w-full">
+      <Combobox value={value} onChange={handleSelect}>
+        <div className="relative w-full">
+          <Combobox.Input
+            className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-white"
+            placeholder="Search location..."
+            displayValue={() => query}
+            onChange={(e) => {
+              const val = e.target.value;
+              setQuery(val);
+              setValue(val);
+            }}
+            disabled={!ready}
+          />
+          <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
             {status === "OK" &&
-              data.map(({ place_id, description }: { place_id: string; description: string }) => (
-                <ComboboxOption 
-                  key={place_id} 
-                  value={description} 
-                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-                />
+              data.map(({ place_id, description }) => (
+                <Combobox.Option
+                  key={place_id}
+                  value={description}
+                  className={({ active }) =>
+                    `relative cursor-default select-none py-2 px-4 ${
+                      active ? 'bg-blue-50 text-gray-900' : 'text-gray-700'
+                    }`
+                  }
+                >
+                  {({ selected, active }) => (
+                    <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                      {description}
+                    </span>
+                  )}
+                </Combobox.Option>
               ))}
-          </ComboboxList>
-        </ComboboxPopover>
-      </div>
-    </Combobox>
+          </Combobox.Options>
+        </div>
+      </Combobox>
+    </div>
   );
 };
 
@@ -639,23 +652,7 @@ const ReportForm: React.FC = () => {
   );
 };
 
-const AnimatedReportButton = () => {
-  const router = useRouter(); // Use the hook inside the component
-  
-  return (
-    <button 
-      onClick={() => router.push("/report")}
-      className="relative group bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition"
-    >
-      <span className="relative z-10">Report disaster</span>
-      {/* First animation layer - subtle pulse */}
-      <span className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-50"></span>
-      {/* Second animation layer - slightly larger pulse on hover */}
-      <span className="absolute -inset-1 rounded-full animate-pulse-slow bg-red-300 opacity-0 group-hover:opacity-60"></span>
-      {/* Third animation layer - reduced spread */}
-      <span className="absolute -inset-1.5 rounded-full animate-ping-slow bg-red-200 opacity-0 group-hover:opacity-40"></span>
-    </button>
-  );
-};
+
+
 
 export default ReportForm;
