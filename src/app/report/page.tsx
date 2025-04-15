@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useMemo, useEffect, ChangeEvent, FormEvent } from 'react';
 import {
   GoogleMap,
   useLoadScript,
