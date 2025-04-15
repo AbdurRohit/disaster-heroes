@@ -9,6 +9,22 @@ import accident from './assets/accident.jpg';
 import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
 
+const AnimatedReportButton = () => {
+  const router = useRouter(); // Use the hook inside the component
+  
+  return (
+    <button 
+      onClick={() => router.push("/report")}
+      className="relative group bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition"
+    >
+      <span className="relative z-10">Report disaster</span>
+      <span className="absolute inset-0 rounded-full animate-ping bg-red-400 opacity-75"></span>
+      <span className="absolute inset-0 rounded-full animate-pulse-slow bg-red-300 opacity-0 group-hover:opacity-75"></span>
+      <span className="absolute -inset-3 rounded-full animate-ping-slow bg-red-200 opacity-0 group-hover:opacity-50"></span>
+    </button>
+  );
+};
+
 const DisasterManagementLanding = () => {
   // const [isMenuOpen, setIsMenuOpen] = useState(false);
   // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -42,11 +58,11 @@ const DisasterManagementLanding = () => {
               When disaster strikes, every second counts. At Disaster Heroes, we empower individuals, communities, and organizations with the knowledge, tools, and support needed to respond effectively to emergencies.
             </p>
             <div className="flex space-x-4">
-              <button className="bg-red-400 text-white px-6 py-2 rounded-full hover:bg-red-500 transition" onClick={handleNavigate} >
-                Report disaster
-              </button>
-              <button className="bg-blue-400 text-white px-6 py-2 rounded-full hover:bg-blue-500 transition"  >
+              <AnimatedReportButton />
+              <button className="bg-blue-400 text-white px-6 py-2 rounded-full hover:bg-blue-500 transition" 
+              onClick={() => router.push("/register")} >
                 Join us
+                
               </button>
             </div>
           </div>

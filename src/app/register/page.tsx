@@ -1,6 +1,6 @@
-// components/RegistrationPage.jsx
+// components/RegistrationPage.tsx
 "use client"
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import Image from 'next/image';
@@ -9,34 +9,47 @@ import bg from '../assets/car.jpg';
 import Navbar from '../components/Navbar';
 import { apiService } from '../services/apiService';
 
+// Define form data type
+interface FormData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+// Define errors type
+interface FormErrors {
+  [key: string]: string;
+}
+
 export default function RegistrationPage() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupMessage, setPopupMessage] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [popupMessage, setPopupMessage] = useState<string>('');
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
   
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     username: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   
-  const togglePasswordVisibility = () => {
+  const togglePasswordVisibility = (): void => {
     setShowPassword(!showPassword);
   };
   
-  const toggleConfirmPasswordVisibility = () => {
+  const toggleConfirmPasswordVisibility = (): void => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { id, value } = e.target;
     setFormData({
       ...formData,
@@ -52,8 +65,8 @@ export default function RegistrationPage() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
     
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
@@ -79,7 +92,7 @@ export default function RegistrationPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: { preventDefault: () => void; }) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -89,7 +102,7 @@ export default function RegistrationPage() {
     setIsSubmitting(true);
     
     try {
-      // Remove confirmPassword before sending to API
+      // Extract userData without confirmPassword
       const { confirmPassword, ...userData } = formData;
       
       const result = await apiService.register(userData);
@@ -105,7 +118,7 @@ export default function RegistrationPage() {
         }, 3000);
       } else {
         setIsSuccess(false);
-        setPopupMessage(result.error);
+        setPopupMessage(result.error || 'Registration failed');
         setShowPopup(true);
       }
     } catch (error) {
@@ -118,7 +131,7 @@ export default function RegistrationPage() {
   };
 
   // Close popup
-  const closePopup = () => {
+  const closePopup = (): void => {
     setShowPopup(false);
   };
 
@@ -257,9 +270,9 @@ export default function RegistrationPage() {
         </div>
       </div>
       
-      {/* Success/Error Popup */}
+      {/* Success/Error Popup with blurred white background */}
       {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-white bg-opacity-75 backdrop-blur-md flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full">
             <div className="flex items-center mb-4">
               {isSuccess ? (
