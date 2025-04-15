@@ -9,7 +9,6 @@ import {
 // Use Navbar component or remove the import
 import Navbar from '../components/Navbar';
 // Remove unused Router import
-import { useRouter } from 'next/navigation';
 import router from 'next/router';
 
 // Types for disaster data
@@ -87,20 +86,6 @@ const formatTimeAgo = (dateString: string): string => {
 };
 
 // Map marker icon based on disaster type
-const getMarkerIcon = (disasterType: string): string => {
-  switch (disasterType.toLowerCase()) {
-    case 'hurricane':
-      return '🌀';
-    case 'wildfire':
-      return '🔥';
-    case 'flood':
-      return '💧';
-    case 'earthquake':
-      return '⚡';
-    default:
-      return '⚠️';
-  }
-};
 
 // Main page component
 export default function DisasterManagementPage() {
@@ -233,24 +218,6 @@ export default function DisasterManagementPage() {
   };
 
   // Function to determine icon for notification type
-  const getNotificationIcon = (type: 'alert' | 'update' | 'report') => {
-    switch (type) {
-      case 'alert':
-        return (
-          <span className="inline-block w-4 h-4 rounded-full bg-yellow-500 mr-2"></span>
-        );
-      case 'update':
-        return (
-          <span className="inline-block w-0 h-0 border-x-8 border-x-transparent border-b-[12px] border-b-blue-500 mr-2"></span>
-        );
-      case 'report':
-        return (
-          <span className="inline-block w-0 h-0 border-x-8 border-x-transparent border-b-[12px] border-b-red-500 mr-2"></span>
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-100">

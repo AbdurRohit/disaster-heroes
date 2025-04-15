@@ -23,7 +23,6 @@ interface FormErrors {
 }
 
 export default function RegistrationPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

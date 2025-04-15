@@ -31,9 +31,6 @@ const DisasterManagementLanding = () => {
 
   const router = useRouter();
 
-  const handleNavigate = () => {
-    router.push("/report");
-  };
   
   return (
     <div className="min-h-screen bg-white">
