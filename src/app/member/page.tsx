@@ -7,6 +7,7 @@ import {
   Marker
 } from "@react-google-maps/api";
 import Navbar from '../components/Navbar';
+import router, { Router } from 'next/router';
 
 // Types for disaster data
 interface Disaster {
@@ -253,7 +254,8 @@ export default function DisasterManagementPage() {
       {/* Header */}
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Disaster Management</h1>
-        <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition">
+        <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition"
+        onClick={() => {router.push('/')}}>
           Log Out
         </button>
       </header>
