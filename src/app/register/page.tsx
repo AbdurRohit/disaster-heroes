@@ -95,33 +95,32 @@ export default function RegistrationPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
     
     setIsSubmitting(true);
     
     try {
-      // Extract userData without confirmPassword
-      const { confirmPassword, ...userData } = formData;
+      // Remove the unused confirmPassword variable
+      const userData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password
+      };
       
-      const result = await apiService.register(userData);
+      const response = await apiService.register(userData);
       
-      if (result.success) {
+      if (response.success) {
         setIsSuccess(true);
-        setPopupMessage('Registration successful! Redirecting to login...');
+        setPopupMessage('Registration successful! You can now log in.');
         setShowPopup(true);
-        
-        // Redirect after showing success message
-        setTimeout(() => {
-          router.push('/login');
-        }, 3000);
       } else {
         setIsSuccess(false);
-        setPopupMessage(result.error || 'Registration failed');
+        setPopupMessage(response.error || 'Registration failed. Please try again.');
         setShowPopup(true);
       }
-    } catch (error) {
+    } catch (err) {
+      // Use the error
+      console.error('Registration error:', err);
       setIsSuccess(false);
       setPopupMessage('An unexpected error occurred. Please try again.');
       setShowPopup(true);

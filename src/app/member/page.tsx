@@ -6,8 +6,11 @@ import {
   useLoadScript,
   Marker
 } from "@react-google-maps/api";
+// Use Navbar component or remove the import
 import Navbar from '../components/Navbar';
-import router, { Router } from 'next/router';
+// Remove unused Router import
+import { useRouter } from 'next/navigation';
+import router from 'next/router';
 
 // Types for disaster data
 interface Disaster {
@@ -251,7 +254,7 @@ export default function DisasterManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
+      <Navbar />
       <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Disaster Management</h1>
         <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition"

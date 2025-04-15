@@ -12,7 +12,6 @@ import usePlacesAutocomplete, {
 } from "use-places-autocomplete";
 import { Combobox } from '@headlessui/react';
 import Navbar from '../components/Navbar';
-import { useRouter } from 'next/navigation';
 
 // Form data interface
 interface FormData {
@@ -118,7 +117,7 @@ const PlacesAutocomplete = ({ setSelected, onAddressSelect }: {
                     }`
                   }
                 >
-                  {({ selected, active }) => (
+                  {({ selected }) => (
                     <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
                       {description}
                     </span>
@@ -171,11 +170,11 @@ const ReportForm: React.FC = () => {
   // Update form data when map marker is selected
   useEffect(() => {
     if (selected) {
-      setFormData({
-        ...formData,
+      setFormData(prevFormData => ({
+        ...prevFormData,
         latitude: selected.lat,
         longitude: selected.lng,
-      });
+      }));
     }
   }, [selected]);
 
@@ -513,16 +512,16 @@ const ReportForm: React.FC = () => {
 
                       // Update form with the new location
                       getGeocode({ location: { lat, lng } })
-                        .then((results: { formatted_address: any; }[]) => {
+                        .then((results: google.maps.GeocoderResult[]) => {
                           setFormData({
                             ...formData,
                             latitude: lat,
                             longitude: lng,
-                            locationAddress: results[0].formatted_address || '',
-                            locationLandmark: results[0].formatted_address || ''
+                            locationAddress: results[0]?.formatted_address || '',
+                            locationLandmark: results[0]?.formatted_address || ''
                           });
                         })
-                        .catch((error: any) => {
+                        .catch((error: Error) => {
                           console.error("Error geocoding click location:", error);
                           setFormData({
                             ...formData,
@@ -651,8 +650,5 @@ const ReportForm: React.FC = () => {
     </>
   );
 };
-
-
-
 
 export default ReportForm;

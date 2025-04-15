@@ -10,7 +10,7 @@ interface UserData {
   // add other fields as needed
 }
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {  // Changed from any to unknown
   success: boolean;
   data?: T;
   error?: string;
