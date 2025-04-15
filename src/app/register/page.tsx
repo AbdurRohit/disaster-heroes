@@ -4,7 +4,6 @@ import { useState, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import bg from '../assets/car.jpg';
 import Navbar from '../components/Navbar';
 import { apiService } from '../services/apiService';
