@@ -2,7 +2,7 @@
 
 Disaster Heroes is a comprehensive disaster management platform designed to empower individuals, communities, and organizations with the knowledge, tools, and support needed to respond effectively to emergencies.
 
-![Disaster Heroes Platform](https://via.placeholder.com/800x400?text=Disaster+Heroes+Platform)
+![Disaster Heroes Platform](./src/app/assets/image.png)
 
 ## 🚨 Features
 
