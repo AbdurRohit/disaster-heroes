@@ -8,8 +8,7 @@ import {
 } from "@react-google-maps/api";
 // Use Navbar component or remove the import
 import Navbar from '../components/Navbar';
-// Remove unused Router import
-import router from 'next/router';
+
 
 // Types for disaster data
 interface Disaster {
