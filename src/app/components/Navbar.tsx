@@ -1,19 +1,31 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const { theme, toggleTheme } = useTheme();
 
     return (
         <div>
-            <nav className="bg-white/80 backdrop-blur-md shadow-lg fixed w-full z-10">
-                <div className="max-w-6xl mx-auto px-4">
+            <nav className="backdrop-blur-md shadow-lg bg-navbg fixed w-full z-10 transition-colors duration-200">
+                <div className="max-w-6xl mx-auto px-1">
                     <div className="flex justify-between h-20">
                         <div className="flex items-center">
                             <div className="flex-shrink-0 flex items-center">
-                                <span className="text-2xl font-bold text-gray-800">DisasterHeroes</span>
+                                <span 
+                                    onClick={() => window.location.href = '/'}
+                                    className="text-2xl font-bold text-gray-800 cursor-pointer
+                                               px-4 py-2 rounded-lg
+                                               shadow-lg hover:shadow-xl
+                                               backdrop-blur-sm bg-white/30
+                                               transition-all duration-300 ease-in-out
+                                               hover:scale-105"
+                                >
+                                    Disaster Heroes
+                                </span>
                             </div>
                             <div className="hidden md:ml-8 md:flex md:space-x-8">
                                 <Link href="/" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Home</Link>
@@ -22,7 +34,24 @@ const Navbar = () => {
                                 <Link href="/editorials" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Editorials</Link>
                             </div>
                         </div>
-                        <div className="hidden md:flex items-center">
+                        <div className="hidden md:flex items-center space-x-4">
+                            {/* Theme Toggle Button */}
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
+                                aria-label="Toggle theme"
+                            >
+                                {theme === 'light' ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
+                                    </svg>
+                                )}
+                            </button>
+
                             <div className="relative">
                                 <button
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}

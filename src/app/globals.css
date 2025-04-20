@@ -2,25 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+.light {
+  --card-text: #3C3D37;
+  --footer:#3C3D37;
+  --card:#ECDFCC;
   --background: #ffffff;
   --foreground: #171717;
+  --navbar-bg: rgba(255, 255, 255, 0.8);
+  --card-bg: #ffffff;
+  --text-primary: #171717;
+  --text-secondary: #4b5563;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --card-text: #ECDFCC;
+  --footer:#3C3D37;
+  --card:#ECDFCC;
+  --background:#181C14;
+  --foreground: #ededed;
+  --navbar-bg: rgba(17, 17, 17, 0.8);
+  --card-bg: #1a1a1a;
+  --text-primary: #ECDFCC;
+  --text-secondary: #9ca3af;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: inherit;
 }
 
-/* Create a new file: src/app/button-animation.css */
 @keyframes pulse-slow {
   0%, 100% {
     transform: scale(1);

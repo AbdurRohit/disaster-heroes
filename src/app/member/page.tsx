@@ -220,60 +220,17 @@ export default function DisasterManagementPage() {
   // Function to determine icon for notification type
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <header className="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Disaster Management</h1>
-        <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition"
-        onClick={() => {router.push('/')}}>
-          Log Out
-        </button>
-      </header>
+    <>
+    <div className='pb-20'>
+      <Navbar/>
+    </div>
+    <div className="min-h-screen bg-navbg">
 
       {/* Main content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Active Disasters Panel */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Active Disasters</h2>
-            <ul className="space-y-4">
-              {mockDisasters.map((disaster) => (
-                <li key={disaster.id} className="flex items-start p-3 rounded-md hover:bg-gray-50 transition-colors border-l-4 border-l-solid" style={{ borderLeftColor: getMarkerColor(disaster.type) }}>
-                  <div className="flex-shrink-0 mr-3">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full" style={{ 
-                      backgroundColor: `${getMarkerColor(disaster.type)}20`, 
-                      color: getMarkerColor(disaster.type) 
-                    }}>
-                      {disaster.type === 'Hurricane' && '🌀'}
-                      {disaster.type === 'Wildfire' && '🔥'}
-                      {disaster.type === 'Flood' && '💧'}
-                      {disaster.type === 'Earthquake' && '⚡'}
-                      {!['Hurricane', 'Wildfire', 'Flood', 'Earthquake'].includes(disaster.type) && '⚠️'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{disaster.type} in {disaster.location}</p>
-                    <div className="flex items-center mt-1">
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${
-                        disaster.severity === 'High' ? 'bg-red-100 text-red-700' : 
-                        disaster.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {disaster.severity}
-                      </span>
-                      <span className="text-gray-500 text-xs ml-2">
-                        {formatTimeAgo(disaster.date)}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           {/* Map Panel - Spans 2 columns */}
-          <div className="bg-white rounded-lg shadow-md p-6 md:col-span-2">
-            <h2 className="text-2xl font-bold mb-4">Map</h2>
+          <div className="bg-card m-5 rounded-lg shadow-md p-3 md:col-span-2">
+            {/* <h2 className="text-2xl text-gray-800 font-bold mb-4">Map</h2> */}
             {isLoaded ? (
               <div className="w-full h-96 rounded-md overflow-hidden">
                 <GoogleMap
@@ -312,9 +269,48 @@ export default function DisasterManagementPage() {
               </div>
             )}
           </div>
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Active Disasters Panel */}
+          <div className="bg-card rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Active Disasters</h2>
+            <ul className="space-y-4">
+              {mockDisasters.map((disaster) => (
+                <li key={disaster.id} className="flex items-start p-3 rounded-md hover:bg-gray-50 transition-colors border-l-4 border-l-solid" style={{ borderLeftColor: getMarkerColor(disaster.type) }}>
+                  <div className="flex-shrink-0 mr-3">
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full" style={{ 
+                      backgroundColor: `${getMarkerColor(disaster.type)}20`, 
+                      color: getMarkerColor(disaster.type) 
+                    }}>
+                      {disaster.type === 'Hurricane' && '🌀'}
+                      {disaster.type === 'Wildfire' && '🔥'}
+                      {disaster.type === 'Flood' && '💧'}
+                      {disaster.type === 'Earthquake' && '⚡'}
+                      {!['Hurricane', 'Wildfire', 'Flood', 'Earthquake'].includes(disaster.type) && '⚠️'}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{disaster.type} in {disaster.location}</p>
+                    <div className="flex items-center mt-1">
+                      <span className={`px-2 py-0.5 text-xs rounded-full ${
+                        disaster.severity === 'High' ? 'bg-red-100 text-red-700' : 
+                        disaster.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {disaster.severity}
+                      </span>
+                      <span className="text-gray-500 text-xs ml-2">
+                        {formatTimeAgo(disaster.date)}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Notifications Panel */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-card rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-4 text-gray-800">Notifications</h2>
             <ul className="space-y-4">
               {mockNotifications.map((notification) => (
@@ -356,6 +352,7 @@ export default function DisasterManagementPage() {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
