@@ -59,7 +59,7 @@ const DisasterManagementLanding = () => {
               <AnimatedReportButton />
               <button 
                 className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-600 transition"
-                onClick={() => router.push("/register")}
+                onClick={() => router.push("/login,,,,,,,")}
               >
                 Join us
               </button>
