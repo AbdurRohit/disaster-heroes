@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from 'react';
 import {
   GoogleMap,
@@ -8,9 +7,10 @@ import {
 } from "@react-google-maps/api";
 // Use Navbar component or remove the import
 import Navbar from '../components/Navbar';
+import { SessionProvider } from 'next-auth/react';
 
 
-// Types for disaster data
+
 interface Disaster {
   id: string;
   type: string;
@@ -23,7 +23,6 @@ interface Disaster {
   date: string;
 }
 
-// Types for notification data
 interface Notification {
   id: string;
   type: 'alert' | 'update' | 'report';
@@ -33,7 +32,7 @@ interface Notification {
   relatedDisasterId?: string;
 }
 
-// API services
+
 const disasterService = {
   getActiveDisasters: async (): Promise<Disaster[]> => {
     try {
@@ -64,7 +63,6 @@ const notificationService = {
   }
 };
 
-// Format time difference from now
 const formatTimeAgo = (dateString: string): string => {
   const now = new Date();
   const pastDate = new Date(dateString);
@@ -84,10 +82,12 @@ const formatTimeAgo = (dateString: string): string => {
   return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
 };
 
-// Map marker icon based on disaster type
+
 
 // Main page component
 export default function DisasterManagementPage() {
+
+
   const [disasters, setDisasters] = useState<Disaster[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -216,10 +216,9 @@ export default function DisasterManagementPage() {
     }
   };
 
-  // Function to determine icon for notification type
-
   return (
     <>
+    <SessionProvider>
     <div className='pb-20'>
       <Navbar/>
     </div>
@@ -351,6 +350,7 @@ export default function DisasterManagementPage() {
         </div>
       </div>
     </div>
+    </SessionProvider>
     </>
   );
 };

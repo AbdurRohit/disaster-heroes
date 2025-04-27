@@ -1,7 +1,8 @@
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from './context/ThemeContext'
+import { ThemeProvider } from "./context/ThemeContext";
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
@@ -9,6 +10,7 @@ import '@fontsource/inter/700.css';
 import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
 import '@fontsource/roboto-condensed/700.css';
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,12 +34,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/* <SessionProvider>    */}
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+      {/* </SessionProvider> */}
       </body>
     </html>
   );

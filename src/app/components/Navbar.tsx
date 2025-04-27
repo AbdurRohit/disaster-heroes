@@ -11,34 +11,36 @@ const Navbar = () => {
     return (
         <div>
             <nav className="backdrop-blur-md shadow-lg bg-navbg fixed w-full z-10 transition-colors duration-200">
-                <div className="max-w-6xl mx-auto px-1">
+                <div className="max-w-1xl mx-auto px-1">
                     <div className="flex justify-between h-20">
                         <div className="flex items-center">
                             <div className="flex-shrink-0 flex items-center">
                                 <span 
                                     onClick={() => window.location.href = '/'}
                                     className="text-2xl font-bold text-gray-800 cursor-pointer
-                                               px-4 py-2 rounded-lg
-                                               shadow-lg hover:shadow-xl
-                                               backdrop-blur-sm bg-white/30
+                                               px-2 py-2 
+                                               
+                                                
+                                               text-footer
                                                transition-all duration-300 ease-in-out
-                                               hover:scale-105"
+                                               "
                                 >
                                     Disaster Heroes
                                 </span>
                             </div>
                             <div className="hidden md:ml-8 md:flex md:space-x-8">
-                                <Link href="/" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Home</Link>
+
                                 <Link href="/about" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">About</Link>
                                 <Link href="/resources" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Resources</Link>
                                 <Link href="/editorials" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Editorials</Link>
+
+                                <Link href="/member" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Member area</Link>
                             </div>
-                        </div>
-                        <div className="hidden md:flex items-center space-x-4">
-                            {/* Theme Toggle Button */}
-                            <button
+
+                             {/* Theme Toggle Button */}
+                             <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
+                                className="p-2 pl-7 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
                                 aria-label="Toggle theme"
                             >
                                 {theme === 'light' ? (
@@ -51,6 +53,9 @@ const Navbar = () => {
                                     </svg>
                                 )}
                             </button>
+                        </div>
+                        <div className="hidden md:flex items-center space-x-4">
+                           
 
                             <div className="relative">
                                 <button
@@ -64,9 +69,9 @@ const Navbar = () => {
                                 </button>
                                 {isDropdownOpen && (
                                     <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white/90 backdrop-blur-sm ring-1 ring-black ring-opacity-5">
-                                        <Link href="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600">Login</Link>
-                                        <Link href="/register" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600">Register</Link>
-                                        <Link href="/member" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600">Member Area</Link>
+                                        <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600">Profile</Link>
+                                        <Link href="/logout" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-blue-600">Logout</Link>
+                            
                                     </div>
                                 )}
                             </div>
@@ -87,17 +92,20 @@ const Navbar = () => {
                 {/* Mobile menu */}
                 {isMenuOpen && (
                     <div className="md:hidden bg-white/95 backdrop-blur-sm">
-                        <div className="pt-2 pb-3 space-y-1">
-                            <Link href="/" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Home</Link>
+                        <div className="pt-1 pb-1 space-y-1">
+                
                             <Link href="/about" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">About</Link>
                             <Link href="/resources" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Resources</Link>
                             <Link href="/editorials" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Editorials</Link>
+
+                            <Link href="/member" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Members</Link>
                         </div>
                         <div className="pt-4 pb-3 border-t border-gray-200">
                             <div className="space-y-1">
                                 <Link href="/login" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Login</Link>
                                 <Link href="/register" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Register</Link>
                                 <Link href="/member" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Member Area</Link>
+                                
                             </div>
                         </div>
                     </div>

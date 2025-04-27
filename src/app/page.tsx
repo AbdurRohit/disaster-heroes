@@ -8,9 +8,12 @@ import bg from './assets/back1anime.jpeg';
 import accident from './assets/accident.jpg';
 import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
+import { useState } from 'react';
+import Login from './components/login';
 
 const AnimatedReportButton = () => {
   const router = useRouter(); // Use the hook inside the component
+
 
   return (
     <button
@@ -30,13 +33,17 @@ const DisasterManagementLanding = () => {
   // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState("none");
 
+  const OpenLogin = () => {
+    setIsVisible("flex");
+  };
 
   return (
     <div className="min-h-screen">
       {/* Navigation Bar */}
       <Navbar />
-
+      <Login isVisible={isVisible} setIsVisible={setIsVisible} />
       {/* Heroes Section */}
       <section className="mt-0 relative">
         <div className="relative">
@@ -55,11 +62,11 @@ const DisasterManagementLanding = () => {
             <p className="font-sans max-w-2xl mb-8 t md:text- text-gray-300">
               When disaster strikes, every second counts. At Disaster Heroes, we empower individuals, communities, and organizations with the knowledge, tools, and support needed to respond effectively to emergencies.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex space-x-10">
               <AnimatedReportButton />
               <button 
                 className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-600 transition"
-                onClick={() => router.push("/login,,,,,,,")}
+                onClick={() => router.push("/register")}
               >
                 Join us
               </button>
@@ -94,7 +101,7 @@ const DisasterManagementLanding = () => {
               recovery strategies. By providing real-time alerts, expert guidance, and emergency
               resources, we help safeguard lives and communities.
             </p>
-            <button className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-700 transition">
+            <button onClick={OpenLogin} className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-700 transition">
               Get started
             </button>
           </div>
@@ -235,7 +242,7 @@ const DisasterManagementLanding = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                   </svg>
-                  <span>Emergency Hotline: 100</span>
+                  <span>Emergency Hotline: 911</span>
                 </li>
 
                 <li className="flex items-center">
@@ -257,7 +264,9 @@ const DisasterManagementLanding = () => {
                   </svg>
                   <span>disasterheroes911@gmail.com</span>
                 </li>
-
+                <li>
+                  <span> ☎️   <a href="https://en.wikipedia.org/wiki/List_of_emergency_telephone_numbers">Link to International helplines</a> </span>
+                </li>
               </ul>
             </div>
 
