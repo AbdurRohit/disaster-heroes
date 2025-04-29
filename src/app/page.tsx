@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
 import { useState } from 'react';
 import Login from './components/login';
+import { useSession } from "next-auth/react"
 
 const AnimatedReportButton = () => {
   const router = useRouter(); // Use the hook inside the component
@@ -31,14 +32,20 @@ const AnimatedReportButton = () => {
 const DisasterManagementLanding = () => {
   // const [isMenuOpen, setIsMenuOpen] = useState(false);
   // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+  const { data: session, status } = useSession()
   const router = useRouter();
   const [isVisible, setIsVisible] = useState("none");
 
   const OpenLogin = () => {
     setIsVisible("flex");
   };
-
+  const handleGetStarted = () => {
+    if (session) {
+      router.push('/report');
+    } else {
+      OpenLogin();
+    }
+  };
   return (
     <div className="min-h-screen">
       {/* Navigation Bar */}
@@ -101,7 +108,7 @@ const DisasterManagementLanding = () => {
               recovery strategies. By providing real-time alerts, expert guidance, and emergency
               resources, we help safeguard lives and communities.
             </p>
-            <button onClick={OpenLogin} className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-700 transition">
+            <button onClick={handleGetStarted} className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-700 transition">
               Get started
             </button>
           </div>

@@ -1,3 +1,4 @@
+// src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -14,11 +15,11 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: "database" as const, // stores in Postgres
+    strategy: "database" as const, 
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login", // optional
+    signIn: "/", // optional
   },
 };
 

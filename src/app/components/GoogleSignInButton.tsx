@@ -1,27 +1,37 @@
-// components/GoogleSignInButton.tsx
+import { FC } from 'react';
+import { SessionProvider, signIn, signOut, useSession } from 'next-auth/react';
+import { FcGoogle } from 'react-icons/fc';
+interface GoogleSignInButtonProps {
+  callbackUrl?: string;
+}
 
-import { SessionProvider, signIn, signOut, useSession } from "next-auth/react"
-
-export default function GoogleSignInButton() {
-
+const GoogleSignInButtonComponent: FC<GoogleSignInButtonProps> = ({ callbackUrl }) => {
+  const { data: session } = useSession();
   
-  return (
-    <SessionProvider>
+  return session ? (
     <button 
-      onClick={() => signOut()} 
-      className="rounded px-4 py-2 bg-red-600 text-white"
+      onClick={() => signOut({ callbackUrl: callbackUrl || window.location.href })}
+      className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200"
     >
-      Sign Out
+      <span className="text-gray-700 font-medium">Sign Out</span>
     </button>
   ) : (
     <button
-      onClick={() => signIn("google")}
-      className="flex items-center gap-2 rounded px-4 py-2 bg-blue-600 text-white hover:bg-blue-700"
+      onClick={() => signIn("google", { callbackUrl: callbackUrl || window.location.href })}
+      className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200"
     >
-      <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
-      Sign in with Google
+      <FcGoogle className="h-5 w-5" />
+      <span className="ml-2 text-gray-700 font-medium">Continue with Google</span>
     </button>
+  );
+};
 
+const GoogleSignInButton: FC<GoogleSignInButtonProps> = (props) => {
+  return (
+    <SessionProvider>
+      <GoogleSignInButtonComponent {...props} />
     </SessionProvider>
-  )
-}
+  );
+};
+
+export default GoogleSignInButton;
