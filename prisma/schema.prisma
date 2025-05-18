@@ -44,8 +44,7 @@ model User {
   image         String?
   phoneNumber   String?
   location      UserLocation?
-  disasterUpdates Boolean @default(false)
-
+  disasterUpdates Boolean @default(true)
   accounts Account[]
   sessions Session[]
 }
@@ -53,7 +52,7 @@ model User {
 model UserLocation {
   id        String   @id @default(cuid())
   userId    String   @unique
-  city      String?
+  city      String?   
   region    String?
   country   String?
   latitude  Float?

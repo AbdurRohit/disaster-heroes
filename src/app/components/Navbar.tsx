@@ -4,6 +4,7 @@ import { useState, MouseEvent, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useTheme } from "../context/ThemeContext";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { Middleware } from "next/dist/lib/load-custom-routes";
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -62,29 +63,28 @@ const Navbar = () => {
                             <div className="flex-shrink-0 flex items-center">
                                 <span 
                                     onClick={() => window.location.href = '/'}
-                                    className="text-2xl font-bold text-gray-800 cursor-pointer
+                                    className="text-2xl font-bold cursor-pointer
                                                px-2 py-2 
-                                               text-footer
                                                transition-all duration-300 ease-in-out"
                                 >
                                     Disaster Heroes
                                 </span>
                             </div>
                             <div className="hidden md:ml-8 md:flex md:space-x-8">
-                                <Link href="/about" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">About</Link>
-                                <Link href="/resources" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Resources</Link>
-                                <Link href="/editorials" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Editorials</Link>
+                                <Link href="/about" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">About</Link>
+                                <Link href="/resources" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">Resources</Link>
+                                <Link href="/editorials" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">Editorials</Link>
                                 
                                 {/* Only show Member area if logged in */}
                                 {isAuthenticated && (
-                                    <ProtectedLink href="/member" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-blue-500 transition duration-200">Member area</ProtectedLink>
+                                    <ProtectedLink href="/member" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">Member area</ProtectedLink>
                                 )}
                             </div>
 
                             {/* Theme Toggle Button */}
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 pl-7 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
+                                className="p-2 pl-7 rounded-lg  hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
                                 aria-label="Toggle theme"
                             >
                                 {theme === 'light' ? (
@@ -105,7 +105,7 @@ const Navbar = () => {
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                         className="flex items-center space-x-2 focus:outline-none"
                                     >
-                                        <span className="text-gray-700">{session.user?.name}</span>
+                                        <span className="">{session.user?.name}</span>
                                         {session.user?.image ? (
                                             <img
                                                 src={session.user.image}
@@ -150,7 +150,7 @@ const Navbar = () => {
                         <div className="flex items-center md:hidden">
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none transition duration-200"
+                                className="inline-flex items-center justify-center p-2 rounded-md hover:text-gray-700 hover:bg-gray-100 focus:outline-none transition duration-200"
                                 aria-label="Toggle mobile menu"
                             >
                                 <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
