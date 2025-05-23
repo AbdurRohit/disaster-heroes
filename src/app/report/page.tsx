@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, ChangeEvent, FormEvent } from 'react';
+import { UploadOutlined } from '@ant-design/icons';
+import { Upload, message } from 'antd';
+import type { UploadFile, UploadProps } from 'antd';
 import {
   GoogleMap,
   useLoadScript,
@@ -28,6 +31,7 @@ interface FormData {
   latitude: number | null;
   longitude: number | null;
   locationAddress: string;
+  mediaFiles: UploadFile[];
 }
 
 // API service for form submission
@@ -154,7 +158,8 @@ const ReportForm: React.FC = () => {
     mediaLink: '',
     latitude: null,
     longitude: null,
-    locationAddress: ''
+    locationAddress: '',
+    mediaFiles: [],
   });
 
   // UI state
@@ -164,6 +169,8 @@ const ReportForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   // Default map center (India)
   const center = useMemo(() => ({ lat: 20.5937, lng: 78.9629 }), []);
@@ -291,6 +298,44 @@ const ReportForm: React.FC = () => {
     );
   };
 
+  const uploadProps: UploadProps = {
+    onRemove: (file) => {
+      const index = fileList.indexOf(file);
+      const newFileList = fileList.slice();
+      newFileList.splice(index, 1);
+      setFileList(newFileList);
+      setFormData(prev => ({
+        ...prev,
+        mediaFiles: newFileList
+      }));
+    },
+    beforeUpload: (file) => {
+      // Check file type
+      const isMedia = file.type.startsWith('image/') || file.type.startsWith('video/');
+      if (!isMedia) {
+        message.error('You can only upload image/video files!');
+        return false;
+      }
+      
+      // Check file size (limit to 100MB)
+      const isLt100M = file.size / 1024 / 1024 < 100;
+      if (!isLt100M) {
+        message.error('File must be smaller than 100MB!');
+        return false;
+      }
+
+      setFileList([...fileList, file]);
+      setFormData(prev => ({
+        ...prev,
+        mediaFiles: [...fileList, file]
+      }));
+
+      return false;
+    },
+    fileList,
+  };
+
+  // Update the handleSubmit function
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -303,10 +348,27 @@ const ReportForm: React.FC = () => {
       setIsSubmitting(true);
       setSubmissionError(null);
 
-      const response = await reportService.submitReport(formData);
-      console.log('Form submitted successfully:', response);
+      // Create FormData instance for file upload
+      const submitData = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key === 'mediaFiles') {
+          formData.mediaFiles.forEach((file: any) => {
+            submitData.append('files[]', file);
+          });
+        } else {
+          submitData.append(key, JSON.stringify(formData[key as keyof FormData]));
+        }
+      });
+
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        body: submitData,
+      });
+
+      if (!response.ok) throw new Error('Failed to submit report');
 
       alert('Report submitted successfully!');
+      setFileList([]);
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmissionError('Failed to submit report. Please try again.');
@@ -600,50 +662,44 @@ const ReportForm: React.FC = () => {
                 <label htmlFor="mediaLink" className="block text-sm font-medium text-gray-700 mb-1">
                   Image / Video
                 </label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    id="mediaLink"
-                    name="mediaLink"
-                    placeholder="Link to the media"
-                    className="flex-grow border border-gray-300 rounded-l-md p-2 text-gray-900 bg-white"
-                    value={formData.mediaLink}
-                    onChange={handleInputChange}
-                  />
-                  <button
-                    type="button"
-                    className="bg-white border border-gray-300 border-l-0 rounded-r-md px-4 py-2 flex items-center text-gray-700"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                    Upload Media
-                  </button>
-                </div>
-
-                {/* Submit Buttons */}
-                <div className="flex space-x-4 pt-10">
-                  <button
-                    type="button"
-                    className="border border-gray-300 rounded-md px-6 py-2 bg-white text-gray-700"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-red-500 hover:bg-red-600 text-white rounded-md px-6 py-2 disabled:bg-red-300"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
-                  </button>
-                </div>
-
-                {submissionError && (
-                  <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
-                    {submissionError}
+                <div className="space-y-4">
+                  <Upload {...uploadProps}>
+                    <button
+                      type="button"
+                      className="bg-white border border-gray-300 rounded-md px-4 py-2 flex items-center text-gray-700"
+                    >
+                      <UploadOutlined className="mr-2" />
+                      Select Media Files
+                    </button>
+                  </Upload>
+                  <div className="text-xs text-gray-500">
+                    Support for images and videos. Max file size: 100MB
                   </div>
-                )}
+                </div>
               </div>
+
+              {/* Submit Buttons */}
+              <div className="flex space-x-4 pt-10">
+                <button
+                  type="button"
+                  className="border border-gray-300 rounded-md px-6 py-2 bg-white text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-md px-6 py-2 disabled:bg-red-300"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                </button>
+              </div>
+
+              {submissionError && (
+                <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
+                  {submissionError}
+                </div>
+              )}
             </div>
           </form>
         </div>
