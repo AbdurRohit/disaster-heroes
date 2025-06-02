@@ -69,3 +69,29 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id              String    @id @default(cuid())
+  title           String
+  description     String
+  datetime        DateTime
+  categories      String[]
+  fullName        String?
+  email           String?
+  phoneNumber     String?
+  locationLandmark String
+  newsSourceLink  String?
+  mediaUrls       String[]
+  latitude        Float
+  longitude       Float
+  locationAddress String
+  status          String    @default("PENDING")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

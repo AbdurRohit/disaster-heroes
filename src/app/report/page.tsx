@@ -15,6 +15,8 @@ import usePlacesAutocomplete, {
 } from "use-places-autocomplete";
 import { Combobox } from '@headlessui/react';
 import Navbar from '../components/Navbar';
+import { useRouter } from 'next/navigation';
+import SuccessMessage from '../components/SuccessToast';
 
 // Form data interface
 interface FormData {
@@ -34,20 +36,28 @@ interface FormData {
   mediaFiles: UploadFile[];
 }
 
+// Media preview interface
+interface MediaPreview {
+  url: string;
+  isImage: boolean;
+  file: UploadFile;
+}
+
 // API service for form submission
 const reportService = {
   submitReport: async (formData: FormData) => {
     try {
       const response = await fetch('/api/reports', {
         method: 'POST',
-        headers: {
+        headers:
+         {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit report');
+        throw new Error('Failed to submit firebase-admin.tsreport');
       }
 
       return await response.json();
@@ -83,7 +93,7 @@ const PlacesAutocomplete = ({ setSelected, onAddressSelect }: {
 
     try {
       const results = await getGeocode({ address });
-      const { lat, lng } = await getLatLng(results[0]);
+      const { lat, lng } =  getLatLng(results[0]);
       setSelected({ lat, lng });
       onAddressSelect(
         results[0].formatted_address || address,
@@ -162,6 +172,9 @@ const ReportForm: React.FC = () => {
     mediaFiles: [],
   });
 
+  // Media previews state
+  const [mediaPreviews, setMediaPreviews] = useState<MediaPreview[]>([]);
+
   // UI state
   const [modifyDate, setModifyDate] = useState<boolean>(false);
   const [customDate, setCustomDate] = useState<string>('');
@@ -171,6 +184,8 @@ const ReportForm: React.FC = () => {
   const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const router = useRouter();
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   // Default map center (India)
   const center = useMemo(() => ({ lat: 20.5937, lng: 78.9629 }), []);
@@ -304,31 +319,66 @@ const ReportForm: React.FC = () => {
       const newFileList = fileList.slice();
       newFileList.splice(index, 1);
       setFileList(newFileList);
+      setMediaPreviews(prev => prev.filter(p => p.file.uid !== file.uid));
       setFormData(prev => ({
         ...prev,
         mediaFiles: newFileList
       }));
     },
-    beforeUpload: (file) => {
+    beforeUpload: async (file) => {
       // Check file type
-      const isMedia = file.type.startsWith('image/') || file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      const isMedia = isImage || isVideo;
+      
       if (!isMedia) {
         message.error('You can only upload image/video files!');
         return false;
       }
       
-      // Check file size (limit to 100MB)
+      // Check file size
       const isLt100M = file.size / 1024 / 1024 < 100;
       if (!isLt100M) {
         message.error('File must be smaller than 100MB!');
         return false;
       }
 
-      setFileList([...fileList, file]);
-      setFormData(prev => ({
-        ...prev,
-        mediaFiles: [...fileList, file]
-      }));
+      // Create form data and upload immediately
+      const fileForm = new FormData();
+      fileForm.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: fileForm,
+        });
+
+        if (!res.ok) throw new Error("Upload failed");
+
+        const data = await res.json();
+        const uploadedFile = file as UploadFile;
+        
+        // Add to file list
+        setFileList(prev => [...prev, uploadedFile]);
+        
+        // Add preview if it's an image
+        if (isImage) {
+          setMediaPreviews(prev => [...prev, {
+            url: data.url,
+            isImage: true,
+            file: uploadedFile
+          }]);
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          mediaFiles: [...fileList, uploadedFile]
+        }));
+
+      } catch (error) {
+        console.error("Upload error:", error);
+        message.error('Upload failed');
+      }
 
       return false;
     },
@@ -336,42 +386,52 @@ const ReportForm: React.FC = () => {
   };
 
   // Update the handleSubmit function
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+  
     if (!formData.latitude || !formData.longitude) {
-      alert('Please select a location on the map');
+      alert("Please select a location on the map");
       return;
     }
-
+  
     try {
       setIsSubmitting(true);
       setSubmissionError(null);
-
-      // Create FormData instance for file upload
-      const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'mediaFiles') {
-          formData.mediaFiles.forEach((file: any) => {
-            submitData.append('files[]', file);
-          });
-        } else {
-          submitData.append(key, JSON.stringify(formData[key as keyof FormData]));
-        }
+  
+      // Get all media URLs
+      const uploadedMediaUrls = mediaPreviews.map(preview => preview.url);
+  
+      // Prepare final payload for report creation
+      const reportPayload = {
+        ...formData,
+        mediaUrls: uploadedMediaUrls,
+      };
+  
+      // Submit report
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportPayload),
       });
-
-      const response = await fetch('/api/reports', {
-        method: 'POST',
-        body: submitData,
-      });
-
-      if (!response.ok) throw new Error('Failed to submit report');
-
-      alert('Report submitted successfully!');
+  
+      if (!response.ok) throw new Error("Failed to submit report");
+  
+      // Show success toast
+      setShowSuccessToast(true);
       setFileList([]);
+      setMediaPreviews([]);
+      
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        router.push('/');
+      }, 3000);
+  
     } catch (error) {
-      console.error('Error submitting form:', error);
-      setSubmissionError('Failed to submit report. Please try again.');
+      console.error("Error submitting form:", error);
+      setSubmissionError("Failed to submit report. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -672,6 +732,31 @@ const ReportForm: React.FC = () => {
                       Select Media Files
                     </button>
                   </Upload>
+                  
+                  {/* Preview Section */}
+                  {mediaPreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {mediaPreviews.map((preview) => (
+                        <div key={preview.file.uid} className="relative group">
+                          <img
+                            src={preview.url}
+                            alt="Preview"
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => uploadProps.onRemove?.(preview.file)}
+                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className="text-xs text-gray-500">
                     Support for images and videos. Max file size: 100MB
                   </div>
@@ -704,6 +789,10 @@ const ReportForm: React.FC = () => {
           </form>
         </div>
       </div>
+
+      <SuccessMessage
+        isVisible={showSuccessToast}
+      />
     </>
   );
 };
