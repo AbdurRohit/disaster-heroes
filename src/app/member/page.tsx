@@ -1,28 +1,36 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   GoogleMap,
-  useLoadScript,
-  Marker
+  InfoWindow
 } from "@react-google-maps/api";
-// Use Navbar component or remove the import
 import Navbar from '../components/Navbar';
 import { SessionProvider } from 'next-auth/react';
+import { motion } from 'framer-motion';
+import {Providers} from '../providers';
+import { useGoogleMaps } from '../hooks/useGoogleMaps';
 
 
 
 interface Disaster {
   id: string;
-  type: string;
-  location: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  severity: string;
-  date: string;
+  title: string;
+  description: string;
+  datetime: string;
+  categories: string[];
+  fullName: string | null;
+  email: string | null;
+  phoneNumber: string | null;
+  locationLandmark: string;
+  newsSourceLink: string | null;
+  mediaUrls: string[];
+  latitude: number;
+  longitude: number;
+  locationAddress: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
-
 interface Notification {
   id: string;
   type: 'alert' | 'update' | 'report';
@@ -36,7 +44,9 @@ interface Notification {
 const disasterService = {
   getActiveDisasters: async (): Promise<Disaster[]> => {
     try {
-      const response = await fetch('/api/disasters/active');
+      const response = await fetch('/api/reports');
+      console.log("All report data: ",response.body);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch active disasters');
       }
@@ -51,7 +61,8 @@ const disasterService = {
 const notificationService = {
   getNotifications: async (): Promise<Notification[]> => {
     try {
-      const response = await fetch('/api/notifications');
+      const response = await fetch('/api/notifications', {
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch notifications');
       }
@@ -82,21 +93,105 @@ const formatTimeAgo = (dateString: string): string => {
   return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
 };
 
-
+// Create a red flag icon for the markers
+const createRedFlagIcon = () => {
+  const flagSvg = `
+    <svg width="32" height="40" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg">
+      <!-- Flag pole -->
+      <rect x="2" y="0" width="2" height="40" fill="#8B4513"/>
+      <!-- Flag -->
+      <path d="M4 2 L24 2 L20 8 L24 14 L4 14 Z" fill="#DC2626" stroke="#B91C1C" stroke-width="1"/>
+      <!-- Flag shadow -->
+      <path d="M4 14 L24 14 L20 20 L24 26 L4 26 Z" fill="#991B1B" opacity="0.3"/>
+    </svg>
+  `;
+  
+  const blob = new Blob([flagSvg], { type: 'image/svg+xml' });
+  return URL.createObjectURL(blob);
+};
 
 // Main page component
 export default function DisasterManagementPage() {
-
-
   const [disasters, setDisasters] = useState<Disaster[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 37.0902, lng: -95.7129 }); // US center
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 20.5937, lng: 78.9629 });
+  const [activeTab, setActiveTab] = useState<'disasters' | 'notifications'>('disasters');
+  const [isChatOpen, setIsChatOpen] = useState(true);
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
+  const mapRef = React.useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
-  // Load Google Maps
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-  });
+  // Use shared Google Maps hook
+  const { isLoaded } = useGoogleMaps();
+
+  // Clear existing markers
+  const clearMarkers = () => {
+    markersRef.current.forEach(marker => {
+      marker.map = null;
+    });
+    markersRef.current = [];
+  };
+
+  // Function to center map on disaster location
+  const centerMapOnDisaster = (disaster: Disaster) => {
+    if (mapRef.current) {
+      const newCenter = { lat: disaster.latitude, lng: disaster.longitude };
+      mapRef.current.panTo(newCenter);
+      mapRef.current.setZoom(12); // Zoom in for better view
+    }
+  };
+
+  // Create AdvancedMarkerElements
+  const createAdvancedMarkers = async (map: google.maps.Map, disasters: Disaster[]) => {
+    if (!window.google?.maps?.marker?.AdvancedMarkerElement) {
+      console.error('AdvancedMarkerElement not available');
+      return;
+    }
+
+    // Clear existing markers first
+    clearMarkers();
+
+    const flagIconUrl = createRedFlagIcon();
+
+    for (const disaster of disasters) {
+      try {
+        // Create a pin element with red flag
+        const pinElement = new google.maps.marker.PinElement({
+          background: getMarkerColor(disaster.title),
+          borderColor: '#ffffff',
+          glyphColor: '#ffffff',
+          scale: 1.2,
+        });
+
+        // Create the advanced marker
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          position: { lat: disaster.latitude, lng: disaster.longitude },
+          map: map,
+          title: `${disaster.title} in ${disaster.locationAddress}`,
+          content: pinElement.element,
+          collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
+        });
+
+        // Add click listener
+        marker.addListener('click', () => {
+          // You can add custom click behavior here
+          console.log('Disaster clicked:', disaster.title);
+          setSelectedDisaster(disaster);
+        });
+
+        markersRef.current.push(marker);
+      } catch (error) {
+        console.error('Error creating marker for disaster:', disaster.id, error);
+      }
+    }
+
+    // Clean up the blob URL
+    URL.revokeObjectURL(flagIconUrl);
+  };
 
   // Fetch data on component mount
   useEffect(() => {
@@ -113,7 +208,7 @@ export default function DisasterManagementPage() {
         
         // Set map center to first disaster if available
         if (disastersData.length > 0) {
-          setMapCenter(disastersData[0].coordinates);
+          setMapCenter({ lat: disastersData[0].latitude, lng: disastersData[0].longitude });
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -125,16 +220,27 @@ export default function DisasterManagementPage() {
     fetchData();
   }, []);
 
+  // Update markers when disasters change or map loads
+  useEffect(() => {
+    if (mapRef.current && disasters.length > 0 && isLoaded) {
+      createAdvancedMarkers(mapRef.current, disasters);
+    }
+    
+    return () => {
+      clearMarkers();
+    };
+  }, [disasters, isLoaded]);
+
   // Show loading state
   if (loading && !isLoaded) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
         <div className="text-center">
-          <svg className="animate-spin h-10 w-10 mx-auto mb-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-10 w-10 mx-auto mb-4" style={{ color: 'var(--text-secondary)' }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p>Loading disaster management dashboard...</p>
+          <p style={{ color: 'var(--text-primary)' }}>Loading disaster management dashboard...</p>
         </div>
       </div>
     );
@@ -142,38 +248,7 @@ export default function DisasterManagementPage() {
 
   // Mock data for development (will be replaced by API data)
   const mockDisasters: Disaster[] = disasters.length > 0 ? disasters : [
-    {
-      id: '1',
-      type: 'Hurricane',
-      location: 'Miami, FL',
-      coordinates: { lat: 25.7617, lng: -80.1918 },
-      severity: 'High',
-      date: '2025-04-15T08:00:00Z'
-    },
-    {
-      id: '2',
-      type: 'Wildfire',
-      location: 'Austin, TX',
-      coordinates: { lat: 30.2672, lng: -97.7431 },
-      severity: 'Medium',
-      date: '2025-04-14T12:00:00Z'
-    },
-    {
-      id: '3',
-      type: 'Flood',
-      location: 'Nashville, TN',
-      coordinates: { lat: 36.1627, lng: -86.7816 },
-      severity: 'Medium',
-      date: '2025-04-14T15:00:00Z'
-    },
-    {
-      id: '4',
-      type: 'Earthquake',
-      location: 'San Jose, CA',
-      coordinates: { lat: 37.3382, lng: -121.8863 },
-      severity: 'Low',
-      date: '2025-04-13T22:00:00Z'
-    }
+   //todo: replace with actual data from API
   ];
 
   const mockNotifications: Notification[] = notifications.length > 0 ? notifications : [
@@ -204,154 +279,349 @@ export default function DisasterManagementPage() {
   const getMarkerColor = (disasterType: string): string => {
     switch (disasterType.toLowerCase()) {
       case 'hurricane':
-        return 'blue';
+        return '#3B82F6'; // blue
       case 'wildfire':
-        return 'red';
+        return '#DC2626'; // red
       case 'flood':
-        return 'blue';
+        return '#2563EB'; // blue
       case 'earthquake':
-        return 'gray';
+        return '#6B7280'; // gray
       default:
-        return 'yellow';
+        return '#EAB308'; // yellow
     }
   };
 
   return (
-    <>
-    <SessionProvider>
-    <div className='pb-20'>
-      <Navbar/>
-    </div>
-    <div className="min-h-screen bg-navbg">
+    <div className="h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+      <div className='pb-20'>
+      <Navbar />
+      </div>
+      <div className="flex-1 relative overflow-hidden pt-16">
+        {/* Map Container with Controls */}
+        <div className="absolute inset-0 flex">
+          {/* Left Panel */}
+          <motion.div
+            initial={{ x: -300, opacity: 0 }}
+            animate={{ 
+              x: isLeftPanelOpen ? 0 : -10,
+              opacity: 1,
+              width: isLeftPanelOpen ? '320px' : '40px'
+            }}
+            transition={{ type: "tween",
+               ease: "easeInOut",
+               stiffness: 100,
+               duration: 0.2 }}
+            className={`backdrop-blur-sm rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-5rem)] m-4 ${isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : ''}`}
+            style={{ 
+              backgroundColor: 'var(--card-bg)', 
+              height: 'calc(100vh - 5rem)' 
+            }}
+          >
+            {/* Toggle Button */}
+            <button
+              onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
+              className="p-1 hover:opacity-80 transition-colors"
+              style={{ backgroundColor: 'var(--card)' }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-6 w-3 transform transition-transform ${isLeftPanelOpen ? 'rotate-0' : 'rotate-180'}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                style={{ color: 'var(--footer)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
 
-      {/* Main content */}
-
-          {/* Map Panel - Spans 2 columns */}
-          <div className="bg-card m-5 rounded-lg shadow-md p-3 md:col-span-2">
-            {/* <h2 className="text-2xl text-gray-800 font-bold mb-4">Map</h2> */}
-            {isLoaded ? (
-              <div className="w-full h-96 rounded-md overflow-hidden">
-                <GoogleMap
-                  mapContainerClassName="w-full h-full"
-                  center={mapCenter}
-                  zoom={5}
-                  options={{
-                    mapId: process.env.NEXT_PUBLIC_GOOGLE_MAP_ID,
-                    disableDefaultUI: true,
-                    zoomControl: true,
-                    mapTypeControl: false,
-                    streetViewControl: false,
-                    fullscreenControl: true,
-                  }}
-                >
-                  {mockDisasters.map((disaster) => (
-                    <Marker
-                      key={disaster.id}
-                      position={disaster.coordinates}
-                      title={`${disaster.type} in ${disaster.location}`}
-                      icon={{
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: getMarkerColor(disaster.type),
-                        fillOpacity: 0.7,
-                        strokeWeight: 1,
-                        strokeColor: '#ffffff',
-                        scale: 10,
-                      }}
-                    />
-                  ))}
-                </GoogleMap>
+            {/* Panel Content */}
+            {isLeftPanelOpen && (
+              <div className="flex-1 p-4 flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="relative flex rounded-lg p-1 flex-1" style={{ backgroundColor: 'var(--card)' }}>
+                  {/* Background slider */}
+                  <motion.div
+                    className="absolute top-1 bottom-1 rounded-md shadow-sm"
+                    style={{ backgroundColor: 'var(--footer)' }}
+                    initial={false}
+                    animate={{
+                      left: activeTab === 'disasters' ? '4px' : '50%',
+                      width: 'calc(50% - 4px)'
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                      duration: 0.3
+                    }}
+                  />
+                  
+                  {/* Buttons */}
+                  <button
+                    onClick={() => setActiveTab('disasters')}
+                    className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors duration-300`}
+                    style={{ 
+                      color: activeTab === 'disasters' ? 'var(--background)' : 'var(--footer)'
+                    }}
+                  >
+                    Active Disasters
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('notifications')}
+                    className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors duration-300`}
+                    style={{ 
+                      color: activeTab === 'notifications' ? 'var(--background)' : 'var(--footer)'
+                    }}
+                  >
+                    Notifications
+                  </button>
+                </div>
+                {/* ...existing code... */}
+                </div>
+                <div className="overflow-y-auto flex-1">
+                  {activeTab === 'disasters' ? (
+                    <div className="space-y-4">
+                      {mockDisasters.map((disaster) => (
+                        <motion.div
+                          key={disaster.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-3 rounded-md shadow-sm border-l-4 cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{ 
+                            backgroundColor: 'var(--background)',
+                            borderLeftColor: getMarkerColor(disaster.title) 
+                          }}
+                          onClick={() => centerMapOnDisaster(disaster)} // Center map on click
+                        >
+                          <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{disaster.title}</p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{disaster.locationAddress}</p>
+                          <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                            {formatTimeAgo(disaster.datetime)}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {mockNotifications.map((notification) => (
+                        <motion.div
+                          key={notification.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-3 rounded-md shadow-sm"
+                          style={{ backgroundColor: 'var(--background)' }}
+                        >
+                          <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{notification.title}</p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{notification.description}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
+          </motion.div>
+
+          {/* Map Container */}
+          <div className="flex-1 relative">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerClassName="w-full h-full"
+                center={mapCenter}
+                zoom={5}
+                options={{
+                  mapId: process.env.NEXT_PUBLIC_GOOGLE_MAP_ID,
+                  disableDefaultUI: true,
+                  zoomControl: true,
+                  mapTypeControl: false,
+                  streetViewControl: false,
+                  fullscreenControl: true,
+                  gestureHandling: 'greedy',
+                }}
+                onLoad={async (map) => {
+                  mapRef.current = map;
+                  
+                  // Import the marker library
+                  try {
+                    await google.maps.importLibrary("marker");
+                    if (disasters.length > 0) {
+                      createAdvancedMarkers(map, disasters);
+                    }
+                  } catch (error) {
+                    console.error('Error importing marker library:', error);
+                  }
+                }}
+              >
+                {/* AdvancedMarkers are created programmatically */}
+                {selectedDisaster && (
+                  <InfoWindow
+                    position={{ lat: selectedDisaster.latitude, lng: selectedDisaster.longitude }}
+                    onCloseClick={() => setSelectedDisaster(null)}
+                    options={{
+                      maxWidth: 320,
+                      pixelOffset: new google.maps.Size(0, -30)
+                    }}
+                  >
+                    <div className="p-4 max-w-sm" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: getMarkerColor(selectedDisaster.title) }}
+                          ></div>
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            {selectedDisaster.categories[0] || 'Emergency'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-400">
+                          {formatTimeAgo(selectedDisaster.datetime)}
+                        </span>
+                      </div>
+
+                      {/* Title and Description */}
+                      <div className="mb-4">
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight mb-2">
+                          {selectedDisaster.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                          {selectedDisaster.description}
+                        </p>
+                      </div>
+
+                      {/* Location */}
+                      <div className="mb-4 flex items-start gap-2">
+                        <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-gray-600">{selectedDisaster.locationAddress}</p>
+                          {selectedDisaster.locationLandmark && (
+                            <p className="text-xs text-gray-500 mt-1">Near {selectedDisaster.locationLandmark}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button 
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                          onClick={() => {
+                            // Handle live chat functionality
+                            console.log('Opening live chat for disaster:', selectedDisaster.id);
+                            // You can integrate with your chat system here
+                          }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          Live Chat
+                        </button>
+                  
+                      </div>
+
+                      {/* Media count if available */}
+                      {selectedDisaster.mediaUrls && selectedDisaster.mediaUrls.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>{selectedDisaster.mediaUrls.length} media file{selectedDisaster.mediaUrls.length !== 1 ? 's' : ''} attached</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </InfoWindow>
+                )}
+              </GoogleMap>
             ) : (
-              <div className="w-full h-96 bg-gray-200 flex items-center justify-center rounded">
-                <p>Loading map...</p>
+              <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'var(--card)' }}>
+                <p style={{ color: 'var(--text-primary)' }}>Loading map...</p>
               </div>
             )}
           </div>
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Active Disasters Panel */}
-          <div className="bg-card rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Active Disasters</h2>
-            <ul className="space-y-4">
-              {mockDisasters.map((disaster) => (
-                <li key={disaster.id} className="flex items-start p-3 rounded-md hover:bg-gray-50 transition-colors border-l-4 border-l-solid" style={{ borderLeftColor: getMarkerColor(disaster.type) }}>
-                  <div className="flex-shrink-0 mr-3">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full" style={{ 
-                      backgroundColor: `${getMarkerColor(disaster.type)}20`, 
-                      color: getMarkerColor(disaster.type) 
-                    }}>
-                      {disaster.type === 'Hurricane' && '🌀'}
-                      {disaster.type === 'Wildfire' && '🔥'}
-                      {disaster.type === 'Flood' && '💧'}
-                      {disaster.type === 'Earthquake' && '⚡'}
-                      {!['Hurricane', 'Wildfire', 'Flood', 'Earthquake'].includes(disaster.type) && '⚠️'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{disaster.type} in {disaster.location}</p>
-                    <div className="flex items-center mt-1">
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${
-                        disaster.severity === 'High' ? 'bg-red-100 text-red-700' : 
-                        disaster.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {disaster.severity}
-                      </span>
-                      <span className="text-gray-500 text-xs ml-2">
-                        {formatTimeAgo(disaster.date)}
-                      </span>
+
+          {/* Right Chat Panel */}
+          <motion.div
+            initial={{ x: 300, opacity: 0 }}
+            animate={{ 
+              x: isRightPanelOpen ? 0 : 10,
+              opacity: 1,
+              width: isRightPanelOpen ? '300px' : '40px'
+            }}
+            transition={{ type: "tween",
+              ease: "easeInOut",
+              // damping: 20, 
+              // stiffness: 100,
+              duration: 0.2 }} 
+            className={`backdrop-blur-sm rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-5rem)] m-4 ${isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : ''}`}
+            style={{ backgroundColor: 'var(--card-bg)' }}
+          >
+            
+
+            {/* Panel Content */}
+            {isRightPanelOpen && (
+              <div className="flex-1 p-1 flex flex-col">
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Live Chat</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm flex items-center gap-2" style={{ color: 'var(--footer)' }}>
+                      <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                      Online 2
                     </div>
+                    {/* <button
+                      onClick={() => setIsFullscreen(!isFullscreen)}
+                      className="p-2 hover:bg-gray-100 rounded-lg"
+                      title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        {isFullscreen ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0l5 5m-5-5v5m16-5l-5 5m5-5v5m0-5h-5M4 20l5-5m-5 5v-5m5 5H4m16 0l-5-5m5 5v-5m0 5h-5" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        )}
+                      </svg>
+                    </button> */}
                   </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+                </div>
+                <div className="flex-1 rounded-lg p-4" style={{ backgroundColor: 'var(--card)' }}>
+                  <div className="flex flex-col gap-4">
+                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>Chat functionality coming soon...</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-          {/* Notifications Panel */}
-          <div className="bg-card rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Notifications</h2>
-            <ul className="space-y-4">
-              {mockNotifications.map((notification) => (
-                <li key={notification.id} className="flex items-start p-3 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="flex-shrink-0 mr-3 mt-1">
-                    {notification.type === 'alert' && (
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 text-yellow-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    )}
-                    {notification.type === 'update' && (
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    )}
-                    {notification.type === 'report' && (
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{notification.title}</p>
-                    <p className="text-gray-500 text-sm">{notification.description}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Additional panels can be added here as needed */}
+            {/* Toggle Button */}
+            <button
+              onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
+              className="p-1 hover:opacity-80 transition-colors"
+              style={{ backgroundColor: 'var(--card)' }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-6 w-3 transform transition-transform ${isRightPanelOpen ? 'rotate-180' : 'rotate-0'}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                style={{ color: 'var(--footer)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </motion.div>
         </div>
       </div>
     </div>
-    </SessionProvider>
-    </>
   );
-};
+}
 

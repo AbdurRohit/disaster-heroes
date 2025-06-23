@@ -32,16 +32,16 @@ export default function AboutPage() {
               <h2 className="text-2xl font-bold text-cardtext">Our Values</h2>
               <div className="grid gap-4">
                 <div className="p-4 bg-card rounded-lg">
-                  <h3 className="font-bold text-cardtext">Quick Response</h3>
-                  <p>Every second counts in emergency situations</p>
+                  <h3 className="font-bold text-footer">Quick Response</h3>
+                  <p className='text-footer'>Every second counts in emergency situations</p>
                 </div>
                 <div className="p-4 bg-card rounded-lg">
-                  <h3 className="font-bold text-cardtext">Community First</h3>
-                  <p>Building stronger, more resilient communities</p>
+                  <h3 className="font-bold text-footer">Community First</h3>
+                  <p className='text-footer'>Building stronger, more resilient communities</p>
                 </div>
                 <div className="p-4 bg-card rounded-lg">
-                  <h3 className="font-bold text-cardtext">Innovation</h3>
-                  <p>Using technology to improve disaster response</p>
+                  <h3 className="font-bold text-footer">Innovation</h3>
+                  <p className='text-footer'>Using technology to improve disaster response</p>
                 </div>
               </div>
             </div>

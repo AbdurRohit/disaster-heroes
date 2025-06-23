@@ -1,18 +1,31 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXT_PUBLIC_NEXTAUTH_SECRET,
+  });
 
   const { pathname } = request.nextUrl;
 
-  // If the user is not authenticated and is trying to access a protected route
-  if (!token && pathname.startsWith('/member')) {
-    const signInUrl = new URL('/api/auth/signin', request.url);
-    signInUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(signInUrl);
+  // Allow requests to /api/auth
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
+  // Protect these routes
+  if (pathname.startsWith('/member') || 
+      pathname.startsWith('/profile') || 
+      pathname.startsWith('/settings') || 
+      pathname.startsWith('/report')) {
+    
+    if (!token) {
+      const url = new URL('/api/auth/signin', request.url);
+      url.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();
@@ -20,9 +33,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/member/:path*",
-    "/profile/:path*",
-    "/settings/:path*",
-    "/report/:path*",
+    '/member/:path*',
+    '/profile/:path*',
+    '/settings/:path*',
+    '/report/:path*',
+    '/api/auth/:path*'
   ]
-}
+};

@@ -1,26 +1,58 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth";
+import NextAuth, { DefaultSession, NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { JWT } from "next-auth/jwt";
 
 import { PrismaClient } from "../../../../../node_modules/.prisma/client";
 
 const prisma = new PrismaClient();
 
-export const authOptions = {
+// Extend the built-in session type
+interface ExtendedSession extends DefaultSession {
+  user: {
+    id: string;
+  } & DefaultSession["user"]
+}
+
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  session: {
-    strategy: "database" as const, 
+  callbacks: {
+    async session({ session, token }) {
+      // Include user.id in session
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id as string,
+        },
+      };
+    },
+    async jwt({ token, user, account }: {
+      token: JWT;
+      user: any;
+      account: any;
+    }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    }
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt" as const, // Change to JWT strategy
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  secret: process.env.NEXT_PUBLIC_NEXTAUTH_SECRET,
   pages: {
-    signIn: "/", // optional
+    signIn: "/",
+    error: "/error",
   },
 };
 
