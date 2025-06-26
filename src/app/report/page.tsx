@@ -1,20 +1,19 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, ChangeEvent, FormEvent } from 'react';
-import {
-  GoogleMap,
-  Marker
-} from "@react-google-maps/api";
-import usePlacesAutocomplete, {
-  getGeocode,
-  getLatLng,
-} from "use-places-autocomplete";
-import { Combobox } from '@headlessui/react';
+import React, { useState, useMemo, useEffect, ChangeEvent, FormEvent, Suspense } from 'react';
 import Navbar from '../components/Navbar';
 import { useRouter } from 'next/navigation';
 import SuccessMessage from '../components/SuccessToast';
-import FileUpload from '../components/FileUpload';
 import { useGoogleMaps } from '../hooks/useGoogleMaps';
+
+// Lazy load components for better performance
+import BasicInfoForm from '../components/report/BasicInfoForm';
+import DateTimeSelector from '../components/report/DateTimeSelector';
+import CategorySelector from '../components/report/CategorySelector';
+import ContactInfoForm from '../components/report/ContactInfoForm';
+import LocationSection from '../components/report/LocationSection';
+import MediaUploadSection from '../components/report/MediaUploadSection';
+import AdvancedOptions from '../components/report/AdvancedOptions';
 
 // Form data interface
 interface FormData {
@@ -43,82 +42,18 @@ interface UploadedFile {
   path: string;
 }
 
-// Location search component using usePlacesAutocomplete
-const PlacesAutocomplete = ({ setSelected, onAddressSelect }: {
-  setSelected: (position: { lat: number, lng: number }) => void,
-  onAddressSelect: (address: string, name: string) => void
-}) => {
-  const {
-    ready,
-    value,
-    setValue,
-    suggestions: { status, data },
-    clearSuggestions,
-  } = usePlacesAutocomplete();
-  
-  const [query, setQuery] = useState(value);
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
-
-  const handleSelect = async (address: string) => {
-    setValue(address, false);
-    clearSuggestions();
-
-    try {
-      const results = await getGeocode({ address });
-      const { lat, lng } = getLatLng(results[0]);
-      setSelected({ lat, lng });
-      onAddressSelect(
-        results[0].formatted_address || address,
-        results[0].address_components?.[0]?.long_name || address
-      );
-    } catch (error) {
-      console.error("Error selecting place:", error);
-    }
-  };
-
-  return (
-    <div className="relative w-full">
-      <Combobox value={value} onChange={handleSelect}>
-        <div className="relative w-full">
-          <Combobox.Input
-            className="w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-white"
-            placeholder="Search location..."
-            displayValue={() => query}
-            onChange={(e) => {
-              const val = e.target.value;
-              setQuery(val);
-              setValue(val);
-            }}
-            disabled={!ready}
-          />
-          <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-            {status === "OK" &&
-              data.map(({ place_id, description }) => (
-                <Combobox.Option
-                  key={place_id}
-                  value={description}
-                  className={({ active }) =>
-                    `relative cursor-default select-none py-2 px-4 ${
-                      active ? 'bg-blue-50 text-gray-900' : 'text-gray-700'
-                    }`
-                  }
-                >
-                  {({ selected }) => (
-                    <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
-                      {description}
-                    </span>
-                  )}
-                </Combobox.Option>
-              ))}
-          </Combobox.Options>
-        </div>
-      </Combobox>
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="max-w-8xl mx-auto p-4 pt-14 bg-gray-50 min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <svg className="animate-spin h-10 w-10 mx-auto mb-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p>Loading form components...</p>
     </div>
-  );
-};
+  </div>
+);
 
 // Main Report Form component
 const ReportForm: React.FC = () => {
@@ -151,7 +86,6 @@ const ReportForm: React.FC = () => {
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   
   // Collapsible sections state
   const [showOptionalFields, setShowOptionalFields] = useState<boolean>(false);
@@ -176,25 +110,20 @@ const ReportForm: React.FC = () => {
   // Form event handlers
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
   const handleCategoryChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
-    if (checked) {
-      setFormData({
-        ...formData,
-        categories: [...formData.categories, value]
-      });
-    } else {
-      setFormData({
-        ...formData,
-        categories: formData.categories.filter(category => category !== value)
-      });
-    }
+    setFormData(prev => ({
+      ...prev,
+      categories: checked 
+        ? [...prev.categories, value]
+        : prev.categories.filter(category => category !== value)
+    }));
   };
 
   const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -216,10 +145,10 @@ const ReportForm: React.FC = () => {
         day: 'numeric'
       };
       const dateStr = formattedDate.toLocaleDateString('en-US', options);
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         datetime: `${dateStr} at ${time}`
-      });
+      }));
     }
   };
 
@@ -237,52 +166,15 @@ const ReportForm: React.FC = () => {
   };
 
   const handleAddressSelect = (address: string, name: string) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       locationAddress: address,
       locationLandmark: name || address
-    });
+    }));
   };
 
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        setSelected({ lat, lng });
-
-        // Try to reverse geocode
-        try {
-          const results = await getGeocode({ location: { lat, lng } });
-
-          setFormData({
-            ...formData,
-            latitude: lat,
-            longitude: lng,
-            locationAddress: results[0].formatted_address || 'Location found',
-            locationLandmark: results[0].formatted_address || 'Location found'
-          });
-        } catch (error) {
-          console.error("Error in geocoding:", error);
-          setFormData({
-            ...formData,
-            latitude: lat,
-            longitude: lng,
-            locationAddress: 'Location found but address unknown',
-          });
-        }
-      },
-      (error) => {
-        console.error('Error getting current location:', error);
-        alert('Unable to retrieve your location. Please check your browser permissions.');
-      }
-    );
+  const handleLocationChange = (updates: Partial<FormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
   };
 
   // Handle file upload completion
@@ -290,6 +182,13 @@ const ReportForm: React.FC = () => {
     setFormData(prevFormData => ({
       ...prevFormData,
       mediaUrls: [...prevFormData.mediaUrls, ...uploadedFiles.map(file => file.url)]
+    }));
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaUrls: prev.mediaUrls.filter((_, i) => i !== index)
     }));
   };
 
@@ -336,85 +235,10 @@ const ReportForm: React.FC = () => {
     return (
       <>
         <Navbar />
-        <div className="max-w-8xl mx-auto p-4 pt-14 bg-gray-50 min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <svg className="animate-spin h-10 w-10 mx-auto mb-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p>Loading Google Maps...</p>
-          </div>
-        </div>
+        <LoadingFallback />
       </>
     );
   }
-
-  // Modify the file upload section in your form
-  const fileUploadSection = (
-    <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card)' }}>
-      <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--footer)' }}>
-        📎 Media Files
-      </label>
-      
-      <button
-        type="button"
-        onClick={() => setIsUploadModalOpen(true)}
-        className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        aria-label="Add media files to report"
-      >
-        <svg className="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        Add Media Files
-      </button>
-
-      {/* Display uploaded files */}
-      {formData.mediaUrls.length > 0 && (
-        <div className="mt-4">
-          <p className="text-sm mb-3" id="uploaded-files-count" style={{ color: 'var(--footer)' }}>
-            📁 Uploaded files: {formData.mediaUrls.length}
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="list" aria-labelledby="uploaded-files-count">
-            {formData.mediaUrls.map((url, index) => (
-              <div key={index} className="relative group" role="listitem">
-                <img
-                  src={url}
-                  alt={`Uploaded file ${index + 1}`}
-                  className="w-full h-20 object-cover rounded-lg border shadow-sm"
-                  style={{ borderColor: 'var(--card)' }}
-                  onError={(e) => {
-                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23f0f0f0"/%3E%3Ctext x="50" y="50" font-family="Arial" font-size="12" fill="%23999" text-anchor="middle" dy="0.3em"%3EFile%3C/text%3E%3C/svg%3E';
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      mediaUrls: prev.mediaUrls.filter((_, i) => i !== index)
-                    }));
-                  }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
-                  aria-label={`Remove uploaded file ${index + 1}`}
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* File Upload Modal */}
-      <FileUpload
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        onUploadComplete={handleFileUploadComplete}
-      />
-    </div>
-  );
 
   return (
     <>
@@ -443,432 +267,72 @@ const ReportForm: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Left Column - Essential Information */}
                   <div className="space-y-6">
-                    <div className="border-b pb-4" style={{ borderColor: 'var(--card)' }}>
-                      <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-                        📝 Essential Information
-                      </h2>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Required details about the incident</p>
-                    </div>
-
-                    <div>
-                      <label htmlFor="title" className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                        Report Title <span className="text-red-500" aria-label="required">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        required
-                        className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                        style={{ 
-                          backgroundColor: 'var(--card-bg)', 
-                          color: 'var(--text-primary)', 
-                          borderColor: 'var(--card)' 
-                        }}
-                        placeholder="Brief description of the incident"
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        aria-describedby="title-help"
+                    <Suspense fallback={<LoadingFallback />}>
+                      <BasicInfoForm
+                        formData={formData}
+                        onInputChange={handleInputChange}
                       />
-                      <p id="title-help" className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        Keep it concise and descriptive (e.g., "Flash flood in downtown area")
-                      </p>
-                    </div>
+                    </Suspense>
 
-                    <div>
-                      <label htmlFor="description" className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                        Detailed Description <span className="text-red-500" aria-label="required">*</span>
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        required
-                        rows={5}
-                        className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-vertical"
-                        style={{ 
-                          backgroundColor: 'var(--card-bg)', 
-                          color: 'var(--text-primary)', 
-                          borderColor: 'var(--card)' 
-                        }}
-                        placeholder="Provide detailed information about what happened, current situation, and any immediate dangers..."
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        aria-describedby="description-help"
+                    <Suspense fallback={<div>Loading date selector...</div>}>
+                      <DateTimeSelector
+                        formData={formData}
+                        modifyDate={modifyDate}
+                        customDate={customDate}
+                        customTime={customTime}
+                        onModifyDateToggle={handleModifyDateToggle}
+                        onDateChange={handleDateChange}
+                        onTimeChange={handleTimeChange}
                       />
-                      <p id="description-help" className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        Include as much relevant detail as possible to help emergency responders
-                      </p>
-                    </div>
+                    </Suspense>
 
-                    {/* Date & Time Section */}
-                    <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card)' }}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="text-sm font-semibold" style={{ color: 'var(--footer)' }}>📅 Date & Time</p>
-                          <p className="text-sm" style={{ color: 'var(--footer)' }}>{formData.datetime}</p>
-                        </div>
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            name="modifyDate"
-                            checked={modifyDate}
-                            onChange={handleModifyDateToggle}
-                          />
-                          <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${modifyDate ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${modifyDate ? 'translate-x-6' : 'translate-x-1'}`} />
-                          </div>
-                          <span className="ml-2 text-sm" style={{ color: 'var(--footer)' }}>Custom date/time</span>
-                        </label>
-                      </div>
+                    <Suspense fallback={<div>Loading categories...</div>}>
+                      <CategorySelector
+                        categories={formData.categories}
+                        onCategoryChange={handleCategoryChange}
+                      />
+                    </Suspense>
 
-                      {modifyDate && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 p-4 rounded-lg border" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card)' }}>
-                          <div>
-                            <label htmlFor="datePicker" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                              Date
-                            </label>
-                            <input
-                              type="date"
-                              id="datePicker"
-                              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              style={{ 
-                                backgroundColor: 'var(--card-bg)', 
-                                color: 'var(--text-primary)', 
-                                borderColor: 'var(--card)' 
-                              }}
-                              value={customDate}
-                              onChange={handleDateChange}
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="timePicker" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                              Time
-                            </label>
-                            <input
-                              type="time"
-                              id="timePicker"
-                              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              style={{ 
-                                backgroundColor: 'var(--card-bg)', 
-                                color: 'var(--text-primary)', 
-                                borderColor: 'var(--card)' 
-                              }}
-                              value={customTime}
-                              onChange={handleTimeChange}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Categories */}
-                    <div>
-                      <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-                        🏷️ Incident Categories
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { value: "earthquake", label: "Earthquake", icon: "🏚️" },
-                          { value: "flashFlood", label: "Flash Flood", icon: "🌊" },
-                          { value: "forestFire", label: "Forest Fire", icon: "🔥" },
-                          { value: "accident", label: "Accident", icon: "🚗" },
-                          { value: "others", label: "Others", icon: "⚠️" }
-                        ].map(category => (
-                          <label key={category.value} className="flex items-center p-3 border rounded-lg cursor-pointer transition-colors duration-200 hover:opacity-80" style={{ borderColor: 'var(--card)', backgroundColor: 'var(--card)' }}>
-                            <input
-                              type="checkbox"
-                              name="categories"
-                              value={category.value}
-                              className="sr-only"
-                              onChange={handleCategoryChange}
-                              checked={formData.categories.includes(category.value)}
-                            />
-                            <div className={`w-5 h-5 border-2 rounded-md mr-3 flex items-center justify-center transition-colors duration-200 ${formData.categories.includes(category.value) ? 'bg-blue-600 border-blue-600' : ''}`} style={{ borderColor: formData.categories.includes(category.value) ? '' : 'var(--footer)' }}>
-                              {formData.categories.includes(category.value) && (
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
-                            <span className="mr-2">{category.icon}</span>
-                            <span className="text-sm font-medium" style={{ color: 'var(--footer)' }}>{category.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Optional Contact Information */}
-                    <div className="border-t pt-6" style={{ borderColor: 'var(--card)' }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowOptionalFields(!showOptionalFields)}
-                        className="flex items-center justify-between w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 -m-2"
-                        aria-expanded={showOptionalFields}
-                        aria-controls="optional-fields"
-                      >
-                        <div>
-                          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            👤 Contact Information
-                          </h3>
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Optional - Help responders contact you</p>
-                        </div>
-                        <svg 
-                          className={`w-5 h-5 transition-transform duration-200 ${showOptionalFields ? 'rotate-180' : ''}`} 
-                          style={{ color: 'var(--text-secondary)' }}
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-
-                      <div 
-                        id="optional-fields"
-                        className={`mt-4 space-y-4 transition-all duration-300 ease-in-out ${showOptionalFields ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'}`}
-                      >
-                        <div>
-                          <label htmlFor="fullName" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                            Full Name
-                          </label>
-                          <input
-                            type="text"
-                            id="fullName"
-                            name="fullName"
-                            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                            style={{ 
-                              backgroundColor: 'var(--card-bg)', 
-                              color: 'var(--text-primary)', 
-                              borderColor: 'var(--card)' 
-                            }}
-                            placeholder="Your full name"
-                            value={formData.fullName}
-                            onChange={handleInputChange}
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                            Email Address
-                          </label>
-                          <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                            style={{ 
-                              backgroundColor: 'var(--card-bg)', 
-                              color: 'var(--text-primary)', 
-                              borderColor: 'var(--card)' 
-                            }}
-                            placeholder="your.email@example.com"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="phoneNumber" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                            Phone Number
-                          </label>
-                          <input
-                            type="tel"
-                            id="phoneNumber"
-                            name="phoneNumber"
-                            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                            style={{ 
-                              backgroundColor: 'var(--card-bg)', 
-                              color: 'var(--text-primary)', 
-                              borderColor: 'var(--card)' 
-                            }}
-                            placeholder="+1 (555) 123-4567"
-                            value={formData.phoneNumber}
-                            onChange={handleInputChange}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <Suspense fallback={<div>Loading contact form...</div>}>
+                      <ContactInfoForm
+                        formData={formData}
+                        showOptionalFields={showOptionalFields}
+                        onToggleOptionalFields={() => setShowOptionalFields(!showOptionalFields)}
+                        onInputChange={handleInputChange}
+                      />
+                    </Suspense>
                   </div>
 
                   {/* Right Column - Location & Media */}
                   <div className="space-y-6">
-                    <div className="border-b pb-4" style={{ borderColor: 'var(--card)' }}>
-                      <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-                        📍 Location & Evidence
-                      </h2>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Pinpoint the location and add supporting media</p>
-                    </div>
+                    <Suspense fallback={<div>Loading location section...</div>}>
+                      <LocationSection
+                        formData={formData}
+                        selected={selected}
+                        center={center}
+                        setSelected={setSelected}
+                        onAddressSelect={handleAddressSelect}
+                        onLocationChange={handleLocationChange}
+                        onInputChange={handleInputChange}
+                      />
+                    </Suspense>
 
-                    {/* Map Container */}
-                    <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card)' }}>
-                      <label className="block text-sm font-semibold mb-3" style={{ color: 'var(--footer)' }}>
-                        🗺️ Incident Location <span className="text-red-500" aria-label="required">*</span>
-                      </label>
-                      <div className="w-full h-72 relative rounded-lg overflow-hidden border-2 focus-within:border-blue-500 transition-colors duration-200" style={{ borderColor: 'var(--card)' }}>
-                        <GoogleMap
-                          options={{
-                            mapId: process.env.NEXT_PUBLIC_GOOGLE_MAP_ID,
-                            disableDefaultUI: true,
-                            zoomControl: true,
-                            gestureHandling: 'greedy',
-                          }}
-                          zoom={10}
-                          center={selected || center}
-                          mapContainerClassName="w-full h-full"
-                          onClick={(e) => {
-                            if (e.latLng) {
-                              const lat = e.latLng.lat();
-                              const lng = e.latLng.lng();
-                              setSelected({ lat, lng });
+                    <Suspense fallback={<div>Loading media upload...</div>}>
+                      <MediaUploadSection
+                        mediaUrls={formData.mediaUrls}
+                        onFileUploadComplete={handleFileUploadComplete}
+                        onRemoveFile={handleRemoveFile}
+                      />
+                    </Suspense>
 
-                              // Update form with the new location
-                              getGeocode({ location: { lat, lng } })
-                                .then((results: google.maps.GeocoderResult[]) => {
-                                  setFormData({
-                                    ...formData,
-                                    latitude: lat,
-                                    longitude: lng,
-                                    locationAddress: results[0]?.formatted_address || '',
-                                    locationLandmark: results[0]?.formatted_address || ''
-                                  });
-                                })
-                                .catch((error: Error) => {
-                                  console.error("Error geocoding click location:", error);
-                                  setFormData({
-                                    ...formData,
-                                    latitude: lat,
-                                    longitude: lng,
-                                    locationAddress: 'Address not available',
-                                  });
-                                });
-                            }
-                          }}
-                        >
-                          {selected && <Marker position={selected} />}
-                        </GoogleMap>
-                      </div>
-                    </div>
-
-                    {/* Search Box and Location Controls */}
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="flex-grow">
-                          <PlacesAutocomplete
-                            setSelected={setSelected}
-                            onAddressSelect={handleAddressSelect}
-                          />
-                        </div>
-                        
-                        <button
-                          type="button"
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          onClick={getCurrentLocation}
-                          aria-label="Use current location"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
-                          Current Location
-                        </button>
-                      </div>
-
-                      {/* Location Details */}
-                      <div>
-                        <label htmlFor="locationLandmark" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                          Location Landmark
-                        </label>
-                        <input
-                          type="text"
-                          id="locationLandmark"
-                          name="locationLandmark"
-                          className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                          style={{ 
-                            backgroundColor: 'var(--card-bg)', 
-                            color: 'var(--text-primary)', 
-                            borderColor: 'var(--card)' 
-                          }}
-                          placeholder="Nearby landmark or specific address"
-                          value={formData.locationLandmark}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-
-                      {formData.latitude && formData.longitude && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 dark:bg-green-900/20 dark:border-green-800">
-                          <div className="flex items-start">
-                            <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <div className="text-sm">
-                              <p className="font-medium text-green-800 dark:text-green-200">Location Selected</p>
-                              <p className="text-green-700 dark:text-green-300">Coordinates: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}</p>
-                              {formData.locationAddress && <p className="text-green-700 dark:text-green-300 mt-1">Address: {formData.locationAddress}</p>}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* File Upload Section */}
-                    {fileUploadSection}
-
-                    {/* Advanced Options */}
-                    <div className="border-t pt-6" style={{ borderColor: 'var(--card)' }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                        className="flex items-center justify-between w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-2 -m-2"
-                        aria-expanded={showAdvancedOptions}
-                        aria-controls="advanced-options"
-                      >
-                        <div>
-                          <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            ⚙️ Advanced Options
-                          </h3>
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Additional information and references</p>
-                        </div>
-                        <svg 
-                          className={`w-5 h-5 transition-transform duration-200 ${showAdvancedOptions ? 'rotate-180' : ''}`} 
-                          style={{ color: 'var(--text-secondary)' }}
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-
-                      <div 
-                        id="advanced-options"
-                        className={`mt-4 transition-all duration-300 ease-in-out ${showAdvancedOptions ? 'opacity-100 max-h-32' : 'opacity-0 max-h-0 overflow-hidden'}`}
-                      >
-                        <div>
-                          <label htmlFor="newsSourceLink" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                            📰 News Source Link
-                          </label>
-                          <input
-                            type="url"
-                            id="newsSourceLink"
-                            name="newsSourceLink"
-                            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                            style={{ 
-                              backgroundColor: 'var(--card-bg)', 
-                              color: 'var(--text-primary)', 
-                              borderColor: 'var(--card)' 
-                            }}
-                            placeholder="https://example.com/news-article"
-                            value={formData.newsSourceLink}
-                            onChange={handleInputChange}
-                          />
-                          <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                            Link to news coverage or official reports about this incident
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <Suspense fallback={<div>Loading advanced options...</div>}>
+                      <AdvancedOptions
+                        formData={formData}
+                        showAdvancedOptions={showAdvancedOptions}
+                        onToggleAdvancedOptions={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                        onInputChange={handleInputChange}
+                      />
+                    </Suspense>
                   </div>
                 </div>
 

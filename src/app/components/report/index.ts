@@ -1,0 +1,10 @@
+// Export all report components for easy importing
+export { default as BasicInfoForm } from './BasicInfoForm';
+export { default as DateTimeSelector } from './DateTimeSelector';
+export { default as CategorySelector } from './CategorySelector';
+export { default as ContactInfoForm } from './ContactInfoForm';
+export { default as LocationSection } from './LocationSection';
+export { default as MediaUploadSection } from './MediaUploadSection';
+export { default as AdvancedOptions } from './AdvancedOptions';
+export { default as PlacesAutocomplete } from './PlacesAutocomplete';
+export { default as MapComponent } from './MapComponent';

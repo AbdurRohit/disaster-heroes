@@ -119,9 +119,11 @@ export default function DisasterManagementPage() {
   const [activeTab, setActiveTab] = useState<'disasters' | 'notifications'>('disasters');
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
+  const [expandedDisaster, setExpandedDisaster] = useState<string | null>(null);
+  const [fullscreenMedia, setFullscreenMedia] = useState<string | null>(null);
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
@@ -142,6 +144,16 @@ export default function DisasterManagementPage() {
       const newCenter = { lat: disaster.latitude, lng: disaster.longitude };
       mapRef.current.panTo(newCenter);
       mapRef.current.setZoom(12); // Zoom in for better view
+    }
+  };
+
+  // Function to toggle disaster expansion
+  const toggleDisasterExpansion = (disasterId: string, disaster: Disaster) => {
+    if (expandedDisaster === disasterId) {
+      setExpandedDisaster(null);
+    } else {
+      setExpandedDisaster(disasterId);
+      centerMapOnDisaster(disaster); // Also center map when expanding
     }
   };
 
@@ -305,7 +317,7 @@ export default function DisasterManagementPage() {
             animate={{ 
               x: isLeftPanelOpen ? 0 : -10,
               opacity: 1,
-              width: isLeftPanelOpen ? '320px' : '40px'
+              width: isLeftPanelOpen ? '450px' : '40px'
             }}
             transition={{ type: "tween",
                ease: "easeInOut",
@@ -381,24 +393,147 @@ export default function DisasterManagementPage() {
                 </div>
                 <div className="overflow-y-auto flex-1">
                   {activeTab === 'disasters' ? (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       {mockDisasters.map((disaster) => (
                         <motion.div
                           key={disaster.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-3 rounded-md shadow-sm border-l-4 cursor-pointer hover:opacity-80 transition-opacity"
+                          className="rounded-md shadow-sm border-l-4 overflow-hidden"
                           style={{ 
                             backgroundColor: 'var(--background)',
                             borderLeftColor: getMarkerColor(disaster.title) 
                           }}
-                          onClick={() => centerMapOnDisaster(disaster)} // Center map on click
                         >
-                          <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{disaster.title}</p>
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{disaster.locationAddress}</p>
-                          <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                            {formatTimeAgo(disaster.datetime)}
-                          </p>
+                          {/* Main disaster item - clickable header */}
+                          <div 
+                            className="p-3 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => toggleDisasterExpansion(disaster.id, disaster)}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{disaster.title}</p>
+                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{disaster.locationAddress}</p>
+                                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                                  {formatTimeAgo(disaster.datetime)}
+                                </p>
+                              </div>
+                              <div className="ml-2 flex items-center">
+                                {disaster.mediaUrls && disaster.mediaUrls.length > 0 && (
+                                  <span className="text-xs px-2 py-1 rounded-full mr-2" style={{ backgroundColor: 'var(--card)', color: 'var(--text-secondary)' }}>
+                                    {disaster.mediaUrls.length} files
+                                  </span>
+                                )}
+                                <svg 
+                                  className={`w-4 h-4 transform transition-transform ${expandedDisaster === disaster.id ? 'rotate-180' : 'rotate-0'}`}
+                                  style={{ color: 'var(--text-secondary)' }}
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Expanded content */}
+                          {expandedDisaster === disaster.id && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="border-t border-gray-200"
+                              style={{ borderColor: 'var(--card)' }}
+                            >
+                              <div className="p-3 space-y-3">
+                                {/* Description */}
+                                <div>
+                                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                                    {disaster.description}
+                                  </p>
+                                </div>
+
+                                {/* Categories */}
+                                {disaster.categories && disaster.categories.length > 0 && (
+                                  <div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {disaster.categories.map((category, index) => (
+                                        <span 
+                                          key={index}
+                                          className="text-xs px-2 py-1 rounded-full"
+                                          style={{ backgroundColor: 'var(--card)', color: 'var(--text-secondary)' }}
+                                        >
+                                          {category}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Contact info if available */}
+                                {disaster.fullName && (
+                                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                    <p>Reported by: {disaster.fullName}</p>
+                                  </div>
+                                )}
+
+                                {/* Media files */}
+                                {disaster.mediaUrls && disaster.mediaUrls.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                                      Media Files ({disaster.mediaUrls.length})
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {disaster.mediaUrls.slice(0, 6).map((url, index) => (
+                                        <div 
+                                          key={index}
+                                          className="relative aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFullscreenMedia(url);
+                                          }}
+                                        >
+                                          <img
+                                            src={url}
+                                            alt={`Media ${index + 1}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = 'none';
+                                            }}
+                                          />
+                                          {/* Play icon overlay for videos (optional) */}
+                                          {url.includes('video') && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M8 5v14l11-7z"/>
+                                              </svg>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                      {disaster.mediaUrls.length > 6 && (
+                                        <div 
+                                          className="aspect-square rounded-md flex items-center justify-center cursor-pointer"
+                                          style={{ backgroundColor: 'var(--card)' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // Show all media in fullscreen or modal
+                                            setFullscreenMedia(disaster.mediaUrls[6]);
+                                          }}
+                                        >
+                                          <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                                            +{disaster.mediaUrls.length - 6} more
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
                         </motion.div>
                       ))}
                     </div>
@@ -585,7 +720,7 @@ export default function DisasterManagementPage() {
                         stroke="currentColor"
                       >
                         {isFullscreen ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0l5 5m-5-5v5m16-5l-5 5m5-5v5m0-5h-5M4 20l5-5m-5 5v-5m5 5H4m16 0l-5-5m5 5v-5m0 5h-5" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0l5 5m-5-5v5m16-5l-5 5m5-5v5m0-5h-5M4 20l5-5m-5 5v-5m5 5H4m16 0l-5-5m5 5v-4m0 4h-4" />
                         ) : (
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                         )}
@@ -621,6 +756,64 @@ export default function DisasterManagementPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Fullscreen Media Modal */}
+      {fullscreenMedia && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+          onClick={() => setFullscreenMedia(null)}
+        >
+          <div className="relative max-w-4xl max-h-full p-4">
+            {/* Close button */}
+            <button
+              onClick={() => setFullscreenMedia(null)}
+              className="absolute top-2 right-2 z-10 p-2 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Media content */}
+            <div 
+              className="max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {fullscreenMedia.includes('video') ? (
+                <video
+                  src={fullscreenMedia}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[90vh] object-contain"
+                  onError={(e) => {
+                    console.error('Error loading video:', e);
+                  }}
+                />
+              ) : (
+                <img
+                  src={fullscreenMedia}
+                  alt="Fullscreen media"
+                  className="max-w-full max-h-[90vh] object-contain"
+                  onError={(e) => {
+                    console.error('Error loading image:', e);
+                    setFullscreenMedia(null);
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Navigation arrows for multiple media (optional enhancement) */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black bg-opacity-50 text-white text-sm">
+                <span>Click outside to close</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

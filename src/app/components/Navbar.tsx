@@ -72,6 +72,7 @@ const Navbar = () => {
                             </div>
                             <div className="hidden md:ml-8 md:flex md:space-x-8">
                                 <Link href="/about" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">About</Link>
+                                <Link href="/report" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">Report</Link>
                                 <Link href="/resources" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">Resources</Link>
                                 <Link href="/editorials" className="inline-flex items-center px-3 py-6 border-b-2 border-transparent text-sm font-medium  hover:text-gray-700 hover:border-blue-500 transition duration-200">Editorials</Link>
                                 
@@ -166,6 +167,7 @@ const Navbar = () => {
                     <div className="md:hidden bg-white/95 backdrop-blur-sm">
                         <div className="pt-1 pb-1 space-y-1">
                             <Link href="/about" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">About</Link>
+                            <Link href="/report" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Report</Link>
                             <Link href="/resources" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Resources</Link>
                             <Link href="/editorials" className="block pl-4 pr-4 py-3 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-blue-500 hover:text-gray-800 transition duration-150">Editorials</Link>
                             
