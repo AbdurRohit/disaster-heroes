@@ -13,6 +13,7 @@
   --card-bg: #ffffff;
   --text-primary: #171717;
   --text-secondary: #4b5563;
+  --primary: #000000;
 }
 
 .dark {
@@ -25,6 +26,7 @@
   --card-bg: #1a1a1a;
   --text-primary: #ECDFCC;
   --text-secondary: #9ca3af;
+  --primary: #000000;
 }
 
 body {

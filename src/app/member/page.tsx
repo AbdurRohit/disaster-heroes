@@ -5,7 +5,7 @@ import {
   InfoWindow
 } from "@react-google-maps/api";
 import Navbar from '../components/Navbar';
-import { SessionProvider } from 'next-auth/react';
+import { SessionProvider, useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {Providers} from '../providers';
 import { useGoogleMaps } from '../hooks/useGoogleMaps';
@@ -31,13 +31,20 @@ interface Disaster {
   createdAt: string;
   updatedAt: string;
 }
-interface Notification {
+
+interface UserLocation {
+  latitude: number | null;
+  longitude: number | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+}
+
+interface User {
   id: string;
-  type: 'alert' | 'update' | 'report';
-  title: string;
-  description: string;
-  timestamp: string;
-  relatedDisasterId?: string;
+  email: string;
+  name: string | null;
+  location: UserLocation | null;
 }
 
 
@@ -58,20 +65,32 @@ const disasterService = {
   }
 };
 
-const notificationService = {
-  getNotifications: async (): Promise<Notification[]> => {
+const userService = {
+  getUserProfile: async (email: string): Promise<User | null> => {
     try {
-      const response = await fetch('/api/notifications', {
-      });
+      const response = await fetch(`/api/user-profile?email=${encodeURIComponent(email)}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
+        throw new Error('Failed to fetch user profile');
       }
       return await response.json();
     } catch (error) {
-      console.error('Error fetching notifications:', error);
-      return [];
+      console.error('Error fetching user profile:', error);
+      return null;
     }
   }
+};
+
+// Calculate distance between two points using Haversine formula
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
 };
 
 const formatTimeAgo = (dateString: string): string => {
@@ -112,18 +131,19 @@ const createRedFlagIcon = () => {
 
 // Main page component
 export default function DisasterManagementPage() {
+  const { data: session } = useSession();
   const [disasters, setDisasters] = useState<Disaster[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [filteredDisasters, setFilteredDisasters] = useState<Disaster[]>([]);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 20.5937, lng: 78.9629 });
-  const [activeTab, setActiveTab] = useState<'disasters' | 'notifications'>('disasters');
-  const [isChatOpen, setIsChatOpen] = useState(true);
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
   const [expandedDisaster, setExpandedDisaster] = useState<string | null>(null);
   const [fullscreenMedia, setFullscreenMedia] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'active' | 'nearby'>('active');
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
 
@@ -210,17 +230,52 @@ export default function DisasterManagementPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [disastersData, notificationsData] = await Promise.all([
-          disasterService.getActiveDisasters(),
-          notificationService.getNotifications()
-        ]);
-        
+        const disastersData = await disasterService.getActiveDisasters();
         setDisasters(disastersData);
-        setNotifications(notificationsData);
         
-        // Set map center to first disaster if available
-        if (disastersData.length > 0) {
-          setMapCenter({ lat: disastersData[0].latitude, lng: disastersData[0].longitude });
+        // Fetch user location if session exists
+        if (session?.user?.email) {
+          const userData = await userService.getUserProfile(session.user.email);
+          if (userData?.location) {
+            setUserLocation(userData.location);
+            
+            // Filter disasters within 20km radius
+            const filtered = disastersData.filter(disaster => {
+              if (userData.location?.latitude && userData.location?.longitude) {
+                const distance = calculateDistance(
+                  userData.location.latitude,
+                  userData.location.longitude,
+                  disaster.latitude,
+                  disaster.longitude
+                );
+                return distance <= 20; // 20km radius
+              }
+              return false;
+            });
+            
+            setFilteredDisasters(filtered);
+            
+            // Set map center to user location if available
+            if (userData.location.latitude && userData.location.longitude) {
+              setMapCenter({ 
+                lat: userData.location.latitude, 
+                lng: userData.location.longitude 
+              });
+            }
+          } else {
+            // If no user location, show all disasters
+            setFilteredDisasters(disastersData);
+            // Set map center to first disaster if available
+            if (disastersData.length > 0) {
+              setMapCenter({ lat: disastersData[0].latitude, lng: disastersData[0].longitude });
+            }
+          }
+        } else {
+          // If no session, show all disasters
+          setFilteredDisasters(disastersData);
+          if (disastersData.length > 0) {
+            setMapCenter({ lat: disastersData[0].latitude, lng: disastersData[0].longitude });
+          }
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -230,18 +285,21 @@ export default function DisasterManagementPage() {
     };
 
     fetchData();
-  }, []);
+  }, [session]);
 
-  // Update markers when disasters change or map loads
+  // Update markers when filtered disasters change or map loads
   useEffect(() => {
-    if (mapRef.current && disasters.length > 0 && isLoaded) {
-      createAdvancedMarkers(mapRef.current, disasters);
+    if (mapRef.current && isLoaded) {
+      const disastersToShow = activeTab === 'nearby' ? filteredDisasters : disasters;
+      if (disastersToShow.length > 0) {
+        createAdvancedMarkers(mapRef.current, disastersToShow);
+      }
     }
     
     return () => {
       clearMarkers();
     };
-  }, [disasters, isLoaded]);
+  }, [filteredDisasters, disasters, activeTab, isLoaded]);
 
   // Show loading state
   if (loading && !isLoaded) {
@@ -259,33 +317,11 @@ export default function DisasterManagementPage() {
   }
 
   // Mock data for development (will be replaced by API data)
-  const mockDisasters: Disaster[] = disasters.length > 0 ? disasters : [
-   //todo: replace with actual data from API
-  ];
+  const getCurrentDisasters = (): Disaster[] => {
+    return activeTab === 'nearby' ? filteredDisasters : disasters;
+  };
 
-  const mockNotifications: Notification[] = notifications.length > 0 ? notifications : [
-    {
-      id: '101',
-      type: 'report',
-      title: 'New wildfire reported nearby',
-      description: '25 min, ago',
-      timestamp: '2025-04-15T12:35:00Z'
-    },
-    {
-      id: '102',
-      type: 'alert',
-      title: 'Flood alert in Nashile, TN',
-      description: '1 hour ago',
-      timestamp: '2025-04-15T12:00:00Z'
-    },
-    {
-      id: '103',
-      type: 'update',
-      title: 'Disaster Update Hurricane in Miami, FL',
-      description: '8 hours ago',
-      timestamp: '2025-04-15T04:00:00Z'
-    }
-  ];
+  const mockDisasters: Disaster[] = getCurrentDisasters();
 
   // Get marker color based on disaster type
   const getMarkerColor = (disasterType: string): string => {
@@ -351,50 +387,85 @@ export default function DisasterManagementPage() {
             {isLeftPanelOpen && (
               <div className="flex-1 p-4 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="relative flex rounded-lg p-1 flex-1" style={{ backgroundColor: 'var(--card)' }}>
-                  {/* Background slider */}
+                  <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Disaster Reports
+                  </h2>
+                </div>
+
+                {/* Animated Toggle Switch */}
+                <div className="relative mb-4 rounded-full p-1" style={{ backgroundColor: 'var(--primary)' }}>
+                  {/* Animated Background Pill */}
                   <motion.div
-                    className="absolute top-1 bottom-1 rounded-md shadow-sm"
-                    style={{ backgroundColor: 'var(--footer)' }}
+                    className="absolute top-1 bottom-1 rounded-full bg-white shadow-sm"
                     initial={false}
                     animate={{
-                      left: activeTab === 'disasters' ? '4px' : '50%',
-                      width: 'calc(50% - 4px)'
+                      left: activeTab === 'active' ? '4px' : '50%',
+                      right: activeTab === 'active' ? '50%' : '4px',
                     }}
                     transition={{
-                      type: "spring",
+                      type: "tween",
                       stiffness: 300,
                       damping: 30,
                       duration: 0.3
                     }}
                   />
                   
-                  {/* Buttons */}
-                  <button
-                    onClick={() => setActiveTab('disasters')}
-                    className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors duration-300`}
-                    style={{ 
-                      color: activeTab === 'disasters' ? 'var(--background)' : 'var(--footer)'
-                    }}
-                  >
-                    Active Disasters
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('notifications')}
-                    className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors duration-300`}
-                    style={{ 
-                      color: activeTab === 'notifications' ? 'var(--background)' : 'var(--footer)'
-                    }}
-                  >
-                    Notifications
-                  </button>
+                  {/* Tab Buttons */}
+                  <div className="relative flex">
+                    <button
+                      onClick={() => setActiveTab('active')}
+                      className="flex-1 py-2 px-4 text-sm font-medium rounded-full transition-colors duration-200 relative z-10"
+                      style={{
+                        color: activeTab === 'active' ? 'var(--primary)' : 'white'
+                      }}
+                    >
+                      All Active
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('nearby')}
+                      className="flex-1 py-2 px-4 text-sm font-medium rounded-full transition-colors duration-200 relative z-10"
+                      style={{
+                        color: activeTab === 'nearby' ? 'var(--primary)' : 'white'
+                      }}
+                    >
+                      Nearby
+                    </button>
+                  </div>
                 </div>
-                {/* ...existing code... */}
+
+                {/* Tab Content Description */}
+                <div className="mb-3">
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {activeTab === 'active' 
+                      ? 'Showing all active disaster reports'
+                      : userLocation 
+                        ? 'Showing disasters within 20km of your location'
+                        : 'Sign in to see disasters near you'
+                    }
+                  </p>
                 </div>
+
                 <div className="overflow-y-auto flex-1">
-                  {activeTab === 'disasters' ? (
-                    <div className="space-y-2">
-                      {mockDisasters.map((disaster) => (
+                  <div className="space-y-2">
+                    {mockDisasters.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--card)' }}>
+                          <svg className="w-8 h-8" style={{ color: 'var(--text-secondary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                          {activeTab === 'active' 
+                            ? 'No active disasters at this time'
+                            : userLocation 
+                              ? 'No disasters found within 20km of your location' 
+                              : 'Please sign in to see disasters near you'
+                          }
+                        </p>
+                      </div>
+                    ) : (
+                      mockDisasters.map((disaster) => (
                         <motion.div
                           key={disaster.id}
                           initial={{ opacity: 0, y: 20 }}
@@ -535,24 +606,9 @@ export default function DisasterManagementPage() {
                             </motion.div>
                           )}
                         </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {mockNotifications.map((notification) => (
-                        <motion.div
-                          key={notification.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="p-3 rounded-md shadow-sm"
-                          style={{ backgroundColor: 'var(--background)' }}
-                        >
-                          <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{notification.title}</p>
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{notification.description}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -580,8 +636,9 @@ export default function DisasterManagementPage() {
                   // Import the marker library
                   try {
                     await google.maps.importLibrary("marker");
-                    if (disasters.length > 0) {
-                      createAdvancedMarkers(map, disasters);
+                    const disastersToShow = activeTab === 'nearby' ? filteredDisasters : disasters;
+                    if (disastersToShow.length > 0) {
+                      createAdvancedMarkers(map, disastersToShow);
                     }
                   } catch (error) {
                     console.error('Error importing marker library:', error);
