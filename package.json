@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "chmod +x setup.sh && ./setup.sh && next build",
+    "build": "chmod +x setup.sh && ./setup.sh && npm install && next build",
     "start": "next start",
     "lint": "next lint",
     "setup": "chmod +x setup.sh && ./setup.sh",
