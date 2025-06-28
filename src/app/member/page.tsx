@@ -5,9 +5,8 @@ import {
   InfoWindow
 } from "@react-google-maps/api";
 import Navbar from '../components/Navbar';
-import { SessionProvider, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import {Providers} from '../providers';
 import { useGoogleMaps } from '../hooks/useGoogleMaps';
 
 
@@ -139,7 +138,7 @@ export default function DisasterManagementPage() {
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 20.5937, lng: 78.9629 });
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen] = useState(false);
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
   const [expandedDisaster, setExpandedDisaster] = useState<string | null>(null);
   const [fullscreenMedia, setFullscreenMedia] = useState<string | null>(null);
