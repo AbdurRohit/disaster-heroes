@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "chmod +x setup.sh && ./setup.sh && npm run build",
   "functions": {
     "app/api/**/*.ts": {
       "runtime": "nodejs20.x"

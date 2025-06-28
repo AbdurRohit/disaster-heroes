@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build",
+    "build": "chmod +x setup.sh && ./setup.sh && next build",
     "start": "next start",
     "lint": "next lint",
+    "setup": "chmod +x setup.sh && ./setup.sh",
     "postinstall": "prisma generate"
   },
   "dependencies": {
