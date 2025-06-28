@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "env": {
+    "NEXTAUTH_URL": "@nextauth_url",
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "@google_client_id",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_SECRET": "@google_client_secret",
+    "NEXT_PUBLIC_USER_DATABASE_URL": "@database_url"
+  }
+}

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/app/lib/firebase';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { join } from 'path';
 
-const prisma = new PrismaClient();
 const uploadDir = join(process.cwd(), 'tmp');
 
 export async function POST(request: Request) {
