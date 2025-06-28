@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import FileUpload from '../FileUpload';
+// Remove the Next.js Image import if using regular img
+// import Image from 'next/image';
 
 interface UploadedFile {
   name: string;
@@ -51,6 +53,7 @@ const MediaUploadSection: React.FC<MediaUploadSectionProps> = React.memo(({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="list" aria-labelledby="uploaded-files-count">
             {mediaUrls.map((url, index) => (
               <div key={index} className="relative group" role="listitem">
+                {/* Using regular img tag instead of Next.js Image */}
                 <img
                   src={url}
                   alt={`Uploaded file ${index + 1}`}

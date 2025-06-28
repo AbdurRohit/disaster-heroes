@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useTheme } from "../context/ThemeContext";
+import Image from "next/image"; 
 
 interface UserLocationData {
   ip?: string;
@@ -159,8 +160,10 @@ export default function Profile() {
               {session.user?.image ? (
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-75 animate-pulse-slow group-hover:opacity-100 transition duration-1000"></div>
-                  <img 
+                  <Image
                     src={session.user.image} 
+                    width={96}
+                    height={96}
                     alt="Profile" 
                     className="relative h-24 w-24 rounded-full ring-2 ring-white/20 shadow-lg"
                   />

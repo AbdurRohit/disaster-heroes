@@ -4,6 +4,7 @@ import { useState, MouseEvent, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useTheme } from "../context/ThemeContext";
 import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -108,10 +109,12 @@ const Navbar = () => {
                                     >
                                         <span className="">{session.user?.name}</span>
                                         {session.user?.image ? (
-                                            <img
+                                            <Image
                                                 src={session.user.image}
                                                 alt="Profile"
                                                 className="h-8 w-8 rounded-full"
+                                                width={32} 
+                                                height={32}
                                             />
                                         ) : (
                                             <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -125,9 +128,9 @@ const Navbar = () => {
                                             <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                 Profile
                                             </Link>
-                                            <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            {/* <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                                 Settings
-                                            </Link>
+                                            </Link> */}
                                             <button
                                                 onClick={handleLogout}
                                                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -182,7 +185,7 @@ const Navbar = () => {
                                     <>
                                         <div className="flex items-center px-4">
                                             {session.user?.image ? (
-                                                <img
+                                                <Image
                                                     src={session.user.image}
                                                     alt="Profile"
                                                     className="h-8 w-8 rounded-full"
@@ -198,9 +201,9 @@ const Navbar = () => {
                                             <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                                                 Profile
                                             </Link>
-                                            <Link href="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                            {/* <Link href="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                                                 Settings
-                                            </Link>
+                                            </Link> */}
                                             <button
                                                 onClick={handleLogout}
                                                 className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
