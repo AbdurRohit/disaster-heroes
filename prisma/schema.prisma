@@ -8,20 +8,19 @@ datasource db {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?   @db.Text
-  access_token       String?   @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?   @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -31,26 +30,26 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  phoneNumber   String?
-  location      UserLocation?
-  disasterUpdates Boolean @default(true)
-  accounts Account[]
-  sessions Session[]
+  id              String        @id @default(cuid())
+  name            String?
+  email           String?       @unique
+  emailVerified   DateTime?
+  image           String?
+  disasterUpdates Boolean       @default(true)
+  phoneNumber     String?
+  accounts        Account[]
+  sessions        Session[]
+  location        UserLocation?
 }
 
 model UserLocation {
   id        String   @id @default(cuid())
   userId    String   @unique
-  city      String?   
+  city      String?
   region    String?
   country   String?
   latitude  Float?
@@ -76,21 +75,21 @@ model Media {
 }
 
 model Report {
-  id              String    @id @default(cuid())
-  title           String
-  description     String
-  datetime        DateTime
-  categories      String[]
-  fullName        String?
-  email           String?
-  phoneNumber     String?
+  id               String   @id @default(cuid())
+  title            String
+  description      String
+  datetime         DateTime
+  categories       String[]
+  fullName         String?
+  email            String?
+  phoneNumber      String?
   locationLandmark String
-  newsSourceLink  String?
-  mediaUrls       String[]
-  latitude        Float
-  longitude       Float
-  locationAddress String
-  status          String    @default("PENDING")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  newsSourceLink   String?
+  mediaUrls        String[]
+  latitude         Float
+  longitude        Float
+  locationAddress  String
+  status           String   @default("PENDING")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
