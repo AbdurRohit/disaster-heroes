@@ -79,7 +79,7 @@ if [ -f ".env" ]; then
         print_status "🗄️  Attempting to connect to database and run migrations..."
         
         # Try to run migrations (this will fail if DB is not accessible, but that's okay)
-        if npx prisma migrate deploy 2>/dev/null; then
+        if npx   migrate deploy 2>/dev/null; then
             print_success "✅ Database migrations completed"
         else
             print_status "⚠️  Database migrations skipped (database not accessible or already up to date)"
