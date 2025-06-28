@@ -1,7 +1,5 @@
 // hooks/useFileUpload.ts
 import { useState } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
 
 interface UploadedFile {
   name: string;
@@ -79,8 +77,9 @@ export const useFileUpload = (): UseFileUploadReturn => {
       }
 
       return uploadedFiles;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
       throw err;
     } finally {
       setUploading(false);

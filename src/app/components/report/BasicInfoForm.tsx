@@ -44,7 +44,7 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = React.memo(({
           aria-describedby="title-help"
         />
         <p id="title-help" className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-          Keep it concise and descriptive (e.g., "Flash flood in downtown area")
+          Keep it concise and descriptive (e.g., &quot;Flash flood in downtown area&quot;)
         </p>
       </div>
 

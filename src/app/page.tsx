@@ -32,7 +32,7 @@ const AnimatedReportButton = () => {
 const DisasterManagementLanding = () => {
   // const [isMenuOpen, setIsMenuOpen] = useState(false);
   // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter();
   const [isVisible, setIsVisible] = useState("none");
 

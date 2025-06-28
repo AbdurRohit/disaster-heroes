@@ -28,7 +28,7 @@ interface UserProfile {
 export default function Profile() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { theme } = useTheme();
+  useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
@@ -146,11 +146,6 @@ export default function Profile() {
     return null;
   }
 
-  const formatLocation = (location: UserLocationData) => {
-    if (!location) return '';
-    const parts = [location.city, location.region, location.country].filter(Boolean);
-    return parts.length > 0 ? parts.join(', ') : '';
-  };
 
   
 

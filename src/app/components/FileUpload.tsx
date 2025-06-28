@@ -94,7 +94,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       // Close modal after successful upload
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Upload failed:', err);
     }
   };

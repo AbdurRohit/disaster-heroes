@@ -1,7 +1,6 @@
 "use client";
 
 import React, { lazy, Suspense } from 'react';
-import { getGeocode } from "use-places-autocomplete";
 
 // Lazy load the GoogleMap component
 const GoogleMap = lazy(() => import("@react-google-maps/api").then(module => ({ default: module.GoogleMap })));
@@ -62,3 +61,4 @@ const MapComponent: React.FC<MapComponentProps> = React.memo(({
 MapComponent.displayName = 'MapComponent';
 
 export default MapComponent;
+

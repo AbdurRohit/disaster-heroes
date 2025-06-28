@@ -1,5 +1,5 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth, { DefaultSession, NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { JWT } from "next-auth/jwt";
@@ -7,13 +7,6 @@ import { JWT } from "next-auth/jwt";
 import { PrismaClient } from "../../../../../node_modules/.prisma/client";
 
 const prisma = new PrismaClient();
-
-// Extend the built-in session type
-interface ExtendedSession extends DefaultSession {
-  user: {
-    id: string;
-  } & DefaultSession["user"]
-}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -34,10 +27,9 @@ export const authOptions: NextAuthOptions = {
         },
       };
     },
-    async jwt({ token, user, account }: {
+    async jwt({ token, user }: {
       token: JWT;
-      user: any;
-      account: any;
+      user?: { id: string };
     }) {
       if (user) {
         token.id = user.id;

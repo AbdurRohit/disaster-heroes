@@ -4,7 +4,6 @@ import { useState, MouseEvent, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useTheme } from "../context/ThemeContext";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { Middleware } from "next/dist/lib/load-custom-routes";
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -37,8 +36,9 @@ const Navbar = () => {
 
     // Close dropdown when clicking outside
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent | any) => {
-            if (isDropdownOpen && !event.target.closest('.dropdown-container')) {
+        const handleClickOutside = (event: Event) => {
+            const target = event.target as Element;
+            if (isDropdownOpen && !target.closest('.dropdown-container')) {
                 setIsDropdownOpen(false);
             }
         };
