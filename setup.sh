@@ -5,6 +5,11 @@ echo "🚀 Starting Disaster Heroes project setup..."
 # Exit on any error
 set -e
 
+# Print environment variables for debugging
+echo "🔍 Environment Variables Check:"
+echo "NEXTAUTH_URL: ${NEXTAUTH_URL:-'NOT SET'}"
+
+
 echo "🔧 Generating Prisma client..."
 npx prisma generate
 
