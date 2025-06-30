@@ -36,9 +36,6 @@ const DisasterManagementLanding = () => {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState("none");
 
-  const OpenLogin = () => {
-    setIsVisible("flex");
-  };
   const handleGetStarted = () => {
 
       // Scroll to top of page to show the "Join us" button
