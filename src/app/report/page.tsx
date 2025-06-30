@@ -64,7 +64,7 @@ const ReportForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
-    datetime: new Date().toLocaleString(),
+    datetime: new Date().toISOString(),
     categories: [],
     fullName: '',
     email: '',
@@ -127,41 +127,40 @@ const ReportForm: React.FC = () => {
   };
 
   const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setCustomDate(e.target.value);
-    updateDateTime(e.target.value, customTime);
+    const dateValue = e.target.value;
+    setCustomDate(dateValue);
+    
+    if (dateValue && customTime) {
+      const datetime = new Date(`${dateValue}T${customTime}`).toISOString();
+      setFormData(prev => ({ ...prev, datetime }));
+    }
   };
 
   const handleTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setCustomTime(e.target.value);
-    updateDateTime(customDate, e.target.value);
-  };
-
-  const updateDateTime = (date: string, time: string) => {
-    if (date && time) {
-      const formattedDate = new Date(date);
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      };
-      const dateStr = formattedDate.toLocaleDateString('en-US', options);
-      setFormData(prev => ({
-        ...prev,
-        datetime: `${dateStr} at ${time}`
-      }));
+    const timeValue = e.target.value;
+    setCustomTime(timeValue);
+    
+    if (customDate && timeValue) {
+      const datetime = new Date(`${customDate}T${timeValue}`).toISOString();
+      setFormData(prev => ({ ...prev, datetime }));
     }
   };
 
   const handleModifyDateToggle = (e: ChangeEvent<HTMLInputElement>) => {
     setModifyDate(e.target.checked);
 
-    if (e.target.checked && !customDate) {
+    if (e.target.checked) {
+      // Set to current date/time if not already set
       const now = new Date();
       const today = now.toISOString().split('T')[0];
-      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
 
       setCustomDate(today);
       setCustomTime(currentTime);
+      setFormData(prev => ({ ...prev, datetime: now.toISOString() }));
+    } else {
+      // Reset to current time
+      setFormData(prev => ({ ...prev, datetime: new Date().toISOString() }));
     }
   };
 

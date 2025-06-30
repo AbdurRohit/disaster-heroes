@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
 import { useState } from 'react';
 import Login from './components/login';
-import { useSession } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 
 const AnimatedReportButton = () => {
   const router = useRouter(); // Use the hook inside the component
@@ -40,12 +40,19 @@ const DisasterManagementLanding = () => {
     setIsVisible("flex");
   };
   const handleGetStarted = () => {
-    if (session) {
-      router.push('/report');
-    } else {
-      OpenLogin();
-    }
+
+      // Scroll to top of page to show the "Join us" button
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    
   };
+
+  const handleLogin = async () => {
+        const result = await signIn("google", { redirect: false, callbackUrl: "/profile" });
+        if (result?.url) {
+          router.push(result.url);
+        }
+    };
+    
   return (
     <div className="min-h-screen">
       {/* Navigation Bar */}
@@ -71,12 +78,14 @@ const DisasterManagementLanding = () => {
             </p>
             <div className="flex space-x-10">
               <AnimatedReportButton />
-              <button 
-                className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-600 transition"
-                onClick={() => router.push("/register")}
-              >
-                Join us
-              </button>
+              {!session && (
+                <button 
+                  className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-600 transition"
+                  onClick={handleLogin}
+                >
+                  Join us
+                </button>
+              )}
             </div>
           </div>
         </div>

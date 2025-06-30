@@ -23,12 +23,28 @@ const DateTimeSelector: React.FC<DateTimeSelectorProps> = React.memo(({
   onDateChange,
   onTimeChange
 }) => {
+  // Convert ISO datetime to readable format for display
+  const getDisplayDateTime = () => {
+    try {
+      const date = new Date(formData.datetime);
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'Invalid Date';
+    }
+  };
+
   return (
     <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--card)', borderColor: 'var(--card)' }}>
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-sm font-semibold" style={{ color: 'var(--footer)' }}>📅 Date & Time</p>
-          <p className="text-sm" style={{ color: 'var(--footer)' }}>{formData.datetime}</p>
+          <p className="text-sm" style={{ color: 'var(--footer)' }}>{getDisplayDateTime()}</p>
         </div>
         <label className="flex items-center cursor-pointer">
           <input
