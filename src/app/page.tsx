@@ -75,6 +75,14 @@ const DisasterManagementLanding = () => {
             </p>
             <div className="flex space-x-10">
               <AnimatedReportButton />
+              {session && (
+                <button
+                  className="font-display bg-blue-800 text-card px-6 py-2 rounded-full hover:bg-blue-900 transition"
+                  onClick={() => router.push('/member')}
+                >
+                  Active reports
+                </button>
+              )}
               {!session && (
                 <button 
                   className="font-display bg-footer text-card px-6 py-2 rounded-full hover:bg-gray-600 transition"
