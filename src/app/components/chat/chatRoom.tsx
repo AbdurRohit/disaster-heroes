@@ -1,7 +1,7 @@
-import { useParams } from "next/navigation"
+// import { useParams } from "next/navigation"
 
 export default function ChatRoom() {
-  const params = useParams();
+  // const params = useParams();
 //   const room = chatRooms.find((x) => x.id === params.id);
 //     if (!room) {
 //         // TODO: 404
