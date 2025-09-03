@@ -14,14 +14,12 @@ import { signIn, useSession } from "next-auth/react"
 
 const AnimatedReportButton = () => {
   const router = useRouter(); // Use the hook inside the component
-
-
   return (
     <button
       onClick={() => router.push("/report")}
-      className=" font-display relative group bg-red-700 text-card px-6 py-2 rounded-full hover:bg-red-900 transition"
-    >
-      <span className="relative z-10">Report disaster</span>
+      className=" font-display relative group bg-red-700 text-card px-6 py-2 rounded-full hover:bg-red-900 transition">
+      <span className="relative z-10">
+        Report disaster</span>
       <span className="absolute inset-0 rounded-full animate-ping bg-green-600 opacity-75"></span>
       {/* <span className="absolute inset-0 rounded-full animate-pulse-slow bg-green-300 opacity-0 group-hover:opacity-75"></span>
       <span className="absolute -inset-3 rounded-full animate-ping-slow bg-red-200 opacity-0 group-hover:opacity-50"></span> */}

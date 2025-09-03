@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { useGoogleMaps } from '../hooks/useGoogleMaps';
+import ChatRoom from '../components/chat/chatRoom';
 
 
 
@@ -763,6 +764,7 @@ export default function DisasterManagementPage() {
                       <span className="w-2 h-2 bg-green-600 rounded-full"></span>
                       Online 2
                     </div>
+                  
                     {/* <button
                       onClick={() => setIsFullscreen(!isFullscreen)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
@@ -787,6 +789,7 @@ export default function DisasterManagementPage() {
                 <div className="flex-1 rounded-lg p-4" style={{ backgroundColor: 'var(--card)' }}>
                   <div className="flex flex-col gap-4">
                     <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>Chat functionality coming soon...</p>
+                <ChatRoom/>
                   </div>
                 </div>
               </div>

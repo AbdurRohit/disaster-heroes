@@ -18,8 +18,7 @@ export async function middleware(request: NextRequest) {
   // Protect these routes
   if (pathname.startsWith('/member') || 
       pathname.startsWith('/profile') || 
-      pathname.startsWith('/settings') || 
-      pathname.startsWith('/report')) {
+      pathname.startsWith('/settings')) {
     
     if (!token) {
       const url = new URL('/api/auth/signin', request.url);
@@ -36,7 +35,6 @@ export const config = {
     '/member/:path*',
     '/profile/:path*',
     '/settings/:path*',
-    '/report/:path*',
     '/api/auth/:path*'
   ]
 };
