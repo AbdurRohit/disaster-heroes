@@ -12,7 +12,7 @@ import ChatRoom from '../components/chat/chatRoom';
 
 
 
-interface Disaster {
+export interface Disaster {
   id: string;
   title: string;
   description: string;
@@ -47,6 +47,10 @@ interface User {
   location: UserLocation | null;
 }
 
+export interface DisasterInfo {
+  disasters: Disaster[];
+  selectedId: string | null;
+}
 
 const disasterService = {
   getActiveDisasters: async (): Promise<Disaster[]> => {
@@ -146,6 +150,7 @@ export default function DisasterManagementPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'nearby'>('active');
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const [chatRoom, setChatRoom] = useState<string | null>(null);
 
   // Use shared Google Maps hook
   const { isLoaded } = useGoogleMaps();
@@ -167,12 +172,20 @@ export default function DisasterManagementPage() {
     }
   };
 
+  const openChat =  (disasterId:string) =>{
+    // Logic to open chat related to the disaster
+    setIsRightPanelOpen(true);
+    setChatRoom(disasterId); //setting chat room based on disaster ID
+    
+  }
+
   // Function to toggle disaster expansion
   const toggleDisasterExpansion = (disasterId: string, disaster: Disaster) => {
     if (expandedDisaster === disasterId) {
       setExpandedDisaster(null);
     } else {
       setExpandedDisaster(disasterId);
+      openChat(disasterId);
       centerMapOnDisaster(disaster); // Also center map when expanding
     }
   };
@@ -789,7 +802,8 @@ export default function DisasterManagementPage() {
                 <div className="flex-1 rounded-lg p-4" style={{ backgroundColor: 'var(--card)' }}>
                   <div className="flex flex-col gap-4">
                     <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>Chat functionality coming soon...</p>
-                <ChatRoom/>
+                {/* chatroom component */}
+                <ChatRoom disasters={disasters} selectedId={chatRoom}/> 
                   </div>
                 </div>
               </div>
