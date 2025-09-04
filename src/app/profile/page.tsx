@@ -18,7 +18,7 @@ interface UserLocationData {
   timezone?: string;
 }
 
-interface UserProfile {
+export interface UserProfile {
   name: string;
   email: string;
   phoneNumber: string;
@@ -43,7 +43,7 @@ export default function Profile() {
       loc: '',
       ip: ''
     },
-    disasterUpdates: false
+    disasterUpdates: true
   });
 
   useEffect(() => {

@@ -1,5 +1,11 @@
 import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    serverTimestamp,
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,6 +21,27 @@ console.log('Firebase Config:', firebaseConfig);
 // Initialize Firebasess
 const app = initializeApp(firebaseConfig);
 
+export const db = getFirestore(app);
+
 // Initialize Cloud Storage and get a reference to the service
 export const storage = getStorage(app);
 // export const analytics = getAnalytics(app);
+
+interface user {
+    name: string | null;
+    email: string | null;
+    image: string | null;
+} 
+
+export async function sendMessage(roomId: string, user:user, text: string) {
+    try {
+        await addDoc(collection(db, 'chat-rooms', roomId, 'messages'), {
+            uid: user.email,
+            displayName: user.name,
+            text: text.trim(),
+            timestamp: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error(error);
+    }
+}

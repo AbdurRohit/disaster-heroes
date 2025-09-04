@@ -49,7 +49,7 @@ interface User {
 
 export interface DisasterInfo {
   disasters: Disaster[];
-  selectedId: string | null;
+  selectedId: string;
 }
 
 const disasterService = {
@@ -150,7 +150,7 @@ export default function DisasterManagementPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'nearby'>('active');
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const [chatRoom, setChatRoom] = useState<string | null>(null);
+  const [chatRoom, setChatRoom] = useState<string>('');
 
   // Use shared Google Maps hook
   const { isLoaded } = useGoogleMaps();
