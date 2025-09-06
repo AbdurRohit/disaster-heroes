@@ -54,7 +54,7 @@ interface FirebaseMessage {
     uid: string; // user email as uid
     displayName: string;
     text: string;
-    timestamp: Timestamp; // FirebaseFirestore.Timestamp
+    timestamp: string; // FirebaseFirestore.Timestamp
 }
 
 export function getMessages(roomId: string, callback: (messages: FirebaseMessage[]) => void) {
