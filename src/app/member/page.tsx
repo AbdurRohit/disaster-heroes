@@ -12,7 +12,7 @@ import ChatRoom from '../components/chat/chatRoom';
 
 
 
-interface Disaster {
+export interface Disaster {
   id: string;
   title: string;
   description: string;
@@ -47,6 +47,10 @@ interface User {
   location: UserLocation | null;
 }
 
+export interface DisasterInfo {
+  disasters: Disaster[];
+  selectedId: string;
+}
 
 const disasterService = {
   getActiveDisasters: async (): Promise<Disaster[]> => {
@@ -146,6 +150,7 @@ export default function DisasterManagementPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'nearby'>('active');
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const [chatRoom, setChatRoom] = useState<string>('');
 
   // Use shared Google Maps hook
   const { isLoaded } = useGoogleMaps();
@@ -167,12 +172,20 @@ export default function DisasterManagementPage() {
     }
   };
 
+  const openChat =  (disasterId:string) =>{
+    // Logic to open chat related to the disaster
+    setIsRightPanelOpen(true);
+    setChatRoom(disasterId); //setting chat room based on disaster ID
+    
+  }
+
   // Function to toggle disaster expansion
   const toggleDisasterExpansion = (disasterId: string, disaster: Disaster) => {
     if (expandedDisaster === disasterId) {
       setExpandedDisaster(null);
     } else {
       setExpandedDisaster(disasterId);
+      openChat(disasterId);
       centerMapOnDisaster(disaster); // Also center map when expanding
     }
   };
@@ -697,7 +710,7 @@ export default function DisasterManagementPage() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 ">
                         <button 
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
                           onClick={() => {
@@ -742,14 +755,14 @@ export default function DisasterManagementPage() {
             animate={{ 
               x: isRightPanelOpen ? 0 : 10,
               opacity: 1,
-              width: isRightPanelOpen ? '300px' : '40px'
+              width: isRightPanelOpen ? '400px' : '40px'
             }}
             transition={{ type: "tween",
               ease: "easeInOut",
               // damping: 20, 
               // stiffness: 100,
               duration: 0.2 }} 
-            className={`backdrop-blur-sm rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-5rem)] m-4 ${isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : ''}`}
+            className={`backdrop-blur-sm rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-5rem)] m-1  ${isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : ''}`}
             style={{ backgroundColor: 'var(--card-bg)' }}
           >
             
@@ -788,8 +801,9 @@ export default function DisasterManagementPage() {
                 </div>
                 <div className="flex-1 rounded-lg p-4" style={{ backgroundColor: 'var(--card)' }}>
                   <div className="flex flex-col gap-4">
-                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>Chat functionality coming soon...</p>
-                <ChatRoom/>
+                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>Test Chat Room</p>
+                {/* chatroom component */}
+                <ChatRoom disasters={disasters} selectedId={chatRoom}/> 
                   </div>
                 </div>
               </div>
