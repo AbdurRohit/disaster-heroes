@@ -19,7 +19,7 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-console.log('Firebase Config:', firebaseConfig);
+// console.log('Firebase Config:', firebaseConfig);
 
 // Initialize Firebasess
 const app = initializeApp(firebaseConfig);
@@ -54,7 +54,7 @@ interface FirebaseMessage {
     uid: string; // user email as uid
     displayName: string;
     text: string;
-    timestamp: string; // FirebaseFirestore.Timestamp
+    timestamp: Date; // FirebaseFirestore.Timestamp
 }
 
 export function getMessages(roomId: string, callback: (messages: FirebaseMessage[]) => void) {
