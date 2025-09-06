@@ -40,9 +40,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
     return (
         <form 
             onSubmit={handleSubmit} 
-            className="fixed bottom-0 left-0 w-full p-4 bg-card border-t border-gray-200"
+            className="absolute bottom-0 text-footer left-0 w-full p-4 pr-8"
         >
-            <div className="max-w-4xl mx-auto flex gap-2">
+            <div className="flex gap-2 max-w-4xl mx-auto">
                 <input
                     type="text"
                     placeholder="Type your message..."
