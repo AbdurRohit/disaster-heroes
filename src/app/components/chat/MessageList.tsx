@@ -3,13 +3,14 @@
 import React, { useRef, useLayoutEffect } from 'react';
 import { useMessages } from '../../hooks/useMessage';
 import { useSession } from 'next-auth/react';
+import { Timestamp } from 'firebase/firestore';
 
 interface ChatMessage {
     id: string;
     uid: string;
     displayName: string;
     text: string;
-    timestamp: Date;
+    timestamp: Timestamp;
 }
 
 interface MessageListProps {
@@ -23,7 +24,30 @@ interface MessageProps {
 
 const Message: React.FC<MessageProps> = ({ message, isOwnMessage }) => {
     const { displayName, text, timestamp } = message;
-    const messageTime = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    const formatMessageTime = (timestamp: Timestamp) => {
+        const messageDate = timestamp.toDate();
+        const now = new Date();
+        const diffInDays = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffInDays === 0) {
+            // Today, show time only
+            return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (diffInDays === 1) {
+            // Yesterday
+            return 'Yesterday ' + messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (diffInDays < 7) {
+            // Within a week, show day name
+            return messageDate.toLocaleDateString([], { weekday: 'short' }) + ' ' + 
+                   messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else {
+            // More than a week ago
+            return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+                   messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    }; // TODO: fix this function to show time properly
+
+    const messageTime = formatMessageTime(timestamp);
 
     return (
         <li className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>

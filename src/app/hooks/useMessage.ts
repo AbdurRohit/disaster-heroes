@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { getMessages } from '../lib/firebase';
+import { Timestamp } from 'firebase/firestore';
 
 interface ChatMessage {
     id: string;
     uid: string;
     displayName: string;
     text: string;
-    timestamp: Date;
+    timestamp: Timestamp;
 }
 
 export function useMessages(roomId: string): ChatMessage[] {
