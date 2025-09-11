@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { useGoogleMaps } from '../hooks/useGoogleMaps';
 import ChatRoom from '../components/chat/chatRoom';
-
+import { Suspense } from 'react';
 
 
 export interface Disaster {
@@ -133,7 +133,22 @@ const createRedFlagIcon = () => {
   return URL.createObjectURL(blob);
 };
 
-// Main page component
+
+function LoadingAnimation() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+      <div className="relative">
+        <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
+        <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
+        <div className="mt-8 text-center">
+          <p className="text-lg font-semibold text-purple-700">Loading</p>
+          <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your dashboard</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DisasterManagementPage() {
   const { data: session } = useSession();
   const [disasters, setDisasters] = useState<Disaster[]>([]);
@@ -353,10 +368,11 @@ export default function DisasterManagementPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'var(--background)' }}>
-      <div className='pb-20'>
-      <Navbar />
-      </div>
+    <Suspense fallback={<LoadingAnimation />}>
+      <div className="h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+        <div className='pb-20'>
+          <Navbar />
+        </div>
       <div className="flex-1 relative overflow-hidden pt-16">
         {/* Map Container with Controls */}
         <div className="absolute inset-0 flex">
@@ -888,6 +904,7 @@ export default function DisasterManagementPage() {
         </motion.div>
       )}
     </div>
+    </Suspense>
   );
 }
 
