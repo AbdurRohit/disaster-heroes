@@ -78,7 +78,7 @@ const DisasterManagementLanding = () => {
                   className="font-display bg-blue-800 text-card px-6 py-2 rounded-full hover:bg-blue-900 transition"
                   onClick={() => router.push('/member')}
                 >
-                  Active reports
+                  View disasters
                 </button>
               )}
               {!session && (
