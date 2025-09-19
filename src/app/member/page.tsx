@@ -388,7 +388,7 @@ export default function DisasterManagementPage() {
                ease: "easeInOut",
                stiffness: 100,
                duration: 0.2 }}
-            className={`backdrop-blur-sm rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-5rem)] m-4 ${isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : ''}`}
+            className={`backdrop-blur-sm rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-5rem)] m-2 ${isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : ''}`}
             style={{ 
               backgroundColor: 'var(--card-bg)', 
               height: 'calc(100vh - 5rem)' 
@@ -414,7 +414,7 @@ export default function DisasterManagementPage() {
 
             {/* Panel Content */}
             {isLeftPanelOpen && (
-              <div className="flex-1 p-4 flex flex-col">
+              <div className="flex-1 p-2 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                     Disaster Reports
